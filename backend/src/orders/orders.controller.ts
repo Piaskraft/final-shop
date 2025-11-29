@@ -1,6 +1,5 @@
 // backend/src/orders/orders.controller.ts
-
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
@@ -9,7 +8,12 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  create(@Body() body: CreateOrderDto) {
-    return this.ordersService.create(body);
+  create(@Body() createOrderDto: CreateOrderDto) {
+    return this.ordersService.create(createOrderDto);
+  }
+
+  @Get()
+  findAll() {
+    return this.ordersService.findAll();
   }
 }
