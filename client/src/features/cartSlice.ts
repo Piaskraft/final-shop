@@ -11,6 +11,7 @@ export type ProductForCart = Pick<Product, 'id' | 'name' | 'price'>;
 export type CartItem = {
   product: ProductForCart;
   quantity: number;
+  note: string; // opis / uwagi klienta do tego produktu
 };
 
 type CartState = {
@@ -39,8 +40,47 @@ const cartSlice = createSlice({
       if (existing) {
         existing.quantity += quantity;
       } else {
-        state.items.push({ product, quantity });
+        state.items.push({
+          product,
+          quantity,
+          note: '',
+        });
       }
+    },
+
+    // zmiana ilości sztuk danego produktu
+    updateQuantity(
+      state,
+      action: PayloadAction<{ productId: number; quantity: number }>
+    ) {
+      const { productId, quantity } = action.payload;
+      const item = state.items.find(
+        (cartItem) => cartItem.product.id === productId
+      );
+
+      if (!item) return;
+
+      if (quantity <= 0) {
+        // jeśli ilość <= 0, usuwamy z koszyka
+        state.items = state.items.filter(
+          (cartItem) => cartItem.product.id !== productId
+        );
+      } else {
+        item.quantity = quantity;
+      }
+    },
+
+    // zmiana notatki / opisu dla danego produktu
+    updateNote(
+      state,
+      action: PayloadAction<{ productId: number; note: string }>
+    ) {
+      const { productId, note } = action.payload;
+      const item = state.items.find(
+        (cartItem) => cartItem.product.id === productId
+      );
+      if (!item) return;
+      item.note = note;
     },
 
     // usuwamy wszystkie sztuki danego produktu
@@ -57,7 +97,14 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addToCart, removeFromCart, clearCart } = cartSlice.actions;
+export const {
+  addToCart,
+  updateQuantity,
+  updateNote,
+  removeFromCart,
+  clearCart,
+} = cartSlice.actions;
+
 export default cartSlice.reducer;
 
 // SELECTORY
