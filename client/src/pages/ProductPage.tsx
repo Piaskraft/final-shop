@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../store';
+import { addToCart } from '../features/cartSlice';
 
 type Product = {
   id: number;
@@ -12,80 +15,82 @@ type Product = {
   mainImage: string;
 };
 
-const API_URL = 'http://localhost:3000';
-
 const ProductPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
 
-  useEffect(() => {
-    if (!slug) return;
-
-    const loadProduct = async () => {
-      try {
-        const res = await fetch(`${API_URL}/products/${slug}`);
-
-        if (!res.ok) {
-          throw new Error('HTTP ' + res.status);
-        }
-
-        const raw = await res.json();
-
-        const priceNumber =
-          typeof raw.price === 'number'
-            ? raw.price
-            : Number(String(raw.price).replace(',', '.'));
-
-        const normalized: Product = {
-          id: raw.id,
-          name: raw.name,
-          slug: raw.slug,
-          description: raw.description,
-          price: priceNumber,
-          mainImage: raw.mainImage,
-        };
-
-        setProduct(normalized);
-      } catch (err: any) {
-        setError(err.message ?? 'Fehler beim Laden des Produkts');
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const loadProduct = async () => {
+    try {
+      const res = await fetch(`/products/${slug}`);
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
       }
-    };
 
-    loadProduct();
-  }, [slug]);
+      const raw = await res.json();
+
+      const normalized: Product = {
+        ...raw,
+        price: Number(raw.price),
+      };
+
+      setProduct(normalized);
+    } catch (err: any) {
+      setError(err.message ?? 'Fehler beim Laden des Produkts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadProduct();
+}, [slug]);
+
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    dispatch(addToCart({ product, quantity }));
+  };
 
   if (loading) {
     return <div className="card">Lade Produkt…</div>;
   }
 
-  if (error) {
-    return <div className="card">Fehler: {error}</div>;
-  }
-
-  if (!product) {
-    return <div className="card">Produkt nicht gefunden.</div>;
+  if (error || !product) {
+    return <div className="card">Fehler: {error ?? 'Produkt nicht gefunden'}</div>;
   }
 
   return (
     <div className="card">
       <h1>{product.name}</h1>
-      <p>
-        <strong>Preis:</strong> {product.price.toFixed(2)} €
+      <p style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+        {product.price.toFixed(2)} €
       </p>
-      <p>{product.description}</p>
+      <p style={{ margin: '1rem 0' }}>{product.description}</p>
 
-      {/* na razie placeholder dla obrazka */}
+      {/* ilość + przycisk */}
+      <div style={{ margin: '1rem 0' }}>
+        <label>
+          Menge:{' '}
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={(e) =>
+              setQuantity(Math.max(1, Number(e.target.value) || 1))
+            }
+            style={{ width: '80px', marginRight: '0.5rem' }}
+          />
+        </label>
+        <button onClick={handleAddToCart}>In den Warenkorb</button>
+      </div>
+
       <p>
-        <strong>Bild:</strong> {product.mainImage}
-      </p>
-
-      <p style={{ marginTop: '1rem' }}>
-        <Link to="/">← Zurück zur Übersicht</Link>
+        <Link to="/cart">Zum Warenkorb</Link>
       </p>
     </div>
   );

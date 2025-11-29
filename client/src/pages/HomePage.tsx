@@ -1,70 +1,56 @@
 // client/src/pages/HomePage.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
-// typ produktu, którego używa frontend
-type Product = {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;       // na froncie ZAWSZE liczba
-  mainImage: string;
-};
-
-const API_URL = 'http://localhost:3000';
+import type { RootState, AppDispatch } from '../store';
+import {
+  type Product,
+  setProducts,
+  setLoading,
+  setError,
+} from '../features/productsSlice';
+import { addToCart } from '../features/cartSlice';
 
 const HomePage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { items: products, loading, error } = useSelector(
+    (state: RootState) => state.products
+  );
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        // lecimy bezpośrednio na Nest (port 3000)
-        const res = await fetch(`${API_URL}/products`);
+        dispatch(setLoading(true));
+        dispatch(setError(null));
 
+        const res = await fetch('/products');
         if (!res.ok) {
           throw new Error('HTTP ' + res.status);
         }
 
-        const raw = await res.json();
+        const data = await res.json();
 
-        // normalizacja price -> number (obsługa stringów itp.)
-        const data: Product[] = raw.map((p: any) => {
-          let priceNumber: number;
+        // upewniamy się, że price jest liczbą
+        const normalized: Product[] = data.map((p: any) => ({
+          ...p,
+          price: Number(p.price),
+        }));
 
-          if (typeof p.price === 'number') {
-            priceNumber = p.price;
-          } else if (typeof p.price === 'string') {
-            // na wszelki wypadek zamiana przecinka na kropkę
-            priceNumber = Number(p.price.replace(',', '.'));
-          } else {
-            priceNumber = 0;
-          }
-
-          return {
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            description: p.description,
-            price: priceNumber,
-            mainImage: p.mainImage,
-          };
-        });
-
-        setProducts(data);
+        dispatch(setProducts(normalized));
       } catch (err: any) {
-        setError(err.message ?? 'Fehler beim Laden der Produkte');
+        dispatch(
+          setError(err?.message ?? 'Fehler beim Laden der Produkte')
+        );
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     };
 
     loadProducts();
-  }, []);
+  }, [dispatch]);
 
   if (loading) {
     return <div className="card">Lade Produkte…</div>;
@@ -80,6 +66,16 @@ const HomePage: React.FC = () => {
         <article className="card" key={product.id}>
           <h2>{product.name}</h2>
           <p>{product.price.toFixed(2)} €</p>
+
+       <button
+  type="button"
+  onClick={() => dispatch(addToCart({ product, quantity: 1 }))}
+>
+  In den Warenkorb
+</button>
+
+          <br />
+
           <Link to={`/product/${product.slug}`}>Details ansehen</Link>
         </article>
       ))}
