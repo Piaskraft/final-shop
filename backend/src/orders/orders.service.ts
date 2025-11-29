@@ -1,43 +1,98 @@
 // backend/src/orders/orders.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(createOrderDto: CreateOrderDto) {
-    const totalAmount = createOrderDto.items.reduce(
+  async create(data: CreateOrderDto) {
+    const { name, email, phone, street, postalCode, city, note, items } = data;
+
+    // Bezpieczne wyliczenie customerName – nawet jeśli w DTO pole nazywa się inaczej
+    const anyData = data as any;
+    const customerName: string =
+      name ??
+      anyData.customerName ??
+      anyData.fullName ??
+      'Unbekannter Kunde';
+
+    // 1. ID produktów z koszyka
+    const productIds = items.map((item) => item.productId);
+
+    // 2. Pobieramy produkty z bazy
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        price: true,
+      },
+    });
+
+    // 3. Mapa id -> cena (number)
+    const priceById = new Map<number, number>();
+
+    products.forEach((p) => {
+      const price =
+        typeof p.price === 'number'
+          ? p.price
+          : (p.price as any).toNumber
+          ? (p.price as any).toNumber()
+          : Number(p.price);
+
+      priceById.set(p.id, price);
+    });
+
+    // 4. Dane pozycji zamówienia
+    const orderItemsData = items.map((item) => {
+      const unitPrice = priceById.get(item.productId);
+
+      if (unitPrice === undefined) {
+        throw new Error(`Produkt o id=${item.productId} nie istnieje`);
+      }
+
+      return {
+        quantity: item.quantity,
+        unitPrice,
+        itemNote: item.note ?? '',
+        product: {
+          connect: { id: item.productId },
+        },
+      };
+    });
+
+    // 5. Suma zamówienia
+    const totalAmount = orderItemsData.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
 
-    const order = await this.prisma.order.create({
+    // 6. Tworzymy zamówienie w Prisma
+    return this.prisma.order.create({
       data: {
-        customerName: createOrderDto.customerName,
-        email: createOrderDto.email,
-        phone: createOrderDto.phone ?? null,
-        street: createOrderDto.street,
-        city: createOrderDto.city,
-        postalCode: createOrderDto.postalCode,
-        notes: createOrderDto.notes ?? null,
+        customerName,        // <<< TERAZ ZAWSZE JEST STRING
+        email,
+        phone,
+        street,
+        postalCode,
+        city,
+        notes: note ?? '',
         totalAmount,
         items: {
-          create: createOrderDto.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            itemNote: item.itemNote ?? null,
-          })),
+          create: orderItemsData,
         },
       },
       include: {
         items: true,
       },
     });
+  }
 
-    return order;
+  findAll() {
+    return this.prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { items: true },
+    });
   }
 }

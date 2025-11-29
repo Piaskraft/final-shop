@@ -1,20 +1,17 @@
 // backend/src/orders/dto/create-order.dto.ts
-
-export class CreateOrderItemDto {
-  productId: number;
-  quantity: number;
-  unitPrice: number;
-  itemNote?: string | null;
-}
-
 export class CreateOrderDto {
-  customerName: string;
+  name: string;
   email: string;
-  phone?: string | null;
+  phone?: string;
   street: string;
   postalCode: string;
   city: string;
-  notes?: string | null;
+  note?: string;
 
-  items: CreateOrderItemDto[];
+  items: {
+    productId: number;
+    quantity: number;
+    note?: string;
+    // price z frontu nas nie interesuje – bierzemy go z bazy
+  }[];
 }
