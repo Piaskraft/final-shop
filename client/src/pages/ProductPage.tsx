@@ -6,6 +6,11 @@ import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store';
 import { addToCart } from '../features/cartSlice';
 
+type ProductImage = {
+  id: number;
+  url: string;
+};
+
 type Product = {
   id: number;
   name: string;
@@ -13,6 +18,7 @@ type Product = {
   description: string;
   price: number;
   mainImage: string;
+  images?: ProductImage[]; // <- dodatkowe zdjęcia (wymaganie Kodilla)
 };
 
 const ProductPage: React.FC = () => {
@@ -24,53 +30,80 @@ const ProductPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
 
-useEffect(() => {
-  const loadProduct = async () => {
-    try {
-      const res = await fetch(`/products/${slug}`);
-      if (!res.ok) {
-        throw new Error('HTTP ' + res.status);
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        const res = await fetch(`/products/${slug}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        const raw = await res.json();
+
+        const normalized: Product = {
+          ...raw,
+          price: Number(raw.price),
+          images: Array.isArray(raw.images) ? raw.images : [],
+        };
+
+        setProduct(normalized);
+      } catch (err: any) {
+        setError(err.message ?? 'Fehler beim Laden des Produkts');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const raw = await res.json();
-
-      const normalized: Product = {
-        ...raw,
-        price: Number(raw.price),
-      };
-
-      setProduct(normalized);
-    } catch (err: any) {
-      setError(err.message ?? 'Fehler beim Laden des Produkts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadProduct();
-}, [slug]);
-
+    loadProduct();
+  }, [slug]);
 
   const handleAddToCart = () => {
     if (!product) return;
     dispatch(addToCart({ product, quantity }));
   };
 
-  if (loading) {
-    return <div className="card">Lade Produkt…</div>;
-  }
-
-  if (error || !product) {
+  if (loading) return <div className="card">Lade Produkt…</div>;
+  if (error || !product)
     return <div className="card">Fehler: {error ?? 'Produkt nicht gefunden'}</div>;
-  }
 
   return (
     <div className="card">
       <h1>{product.name}</h1>
+
       <p style={{ fontSize: '1.2rem', fontWeight: 600 }}>
         {product.price.toFixed(2)} €
       </p>
+
       <p style={{ margin: '1rem 0' }}>{product.description}</p>
+
+      {/* DODATKOWE ZDJĘCIA (wymaganie Kodilla) */}
+      {product.images && product.images.length > 0 && (
+        <div style={{ margin: '1rem 0' }}>
+          <p style={{ marginBottom: '0.5rem' }}>
+            <strong>Weitere Bilder:</strong>
+          </p>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {product.images.map((img) => (
+           <img
+  key={img.id}
+  src={img.url}
+  alt={`${product.name} - ${img.id}`}
+  style={{
+    width: 140,
+    height: 90,
+    objectFit: 'cover',
+    border: '1px solid #ccc',
+  }}
+  onError={(e) => {
+    const target = e.currentTarget;
+    target.onerror = null; // żeby nie zapętlić
+    target.src = 'https://picsum.photos/seed/finalshop-' + img.id + '/300/200';
+  }}
+/>
+
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ilość + przycisk */}
       <div style={{ margin: '1rem 0' }}>
@@ -80,9 +113,7 @@ useEffect(() => {
             type="number"
             min={1}
             value={quantity}
-            onChange={(e) =>
-              setQuantity(Math.max(1, Number(e.target.value) || 1))
-            }
+            onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
             style={{ width: '80px', marginRight: '0.5rem' }}
           />
         </label>

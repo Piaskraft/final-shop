@@ -1,55 +1,51 @@
+// client/src/store.ts
 import { configureStore } from '@reduxjs/toolkit';
-import productsReducer from './features/productsSlice';
 import cartReducer from './features/cartSlice';
+import productsReducer from './features/productsSlice';
 
-/**
- * Wczytanie zapisanej zawartości koszyka z localStorage.
- * Zwracamy obiekt częściowego stanu Reduxa: { cart: ... }
- * albo undefined, jeśli nic nie ma / jest błąd.
- */
-function loadCartFromStorage() {
+const CART_STORAGE_KEY = 'piaskraft_cart_v1';
+
+// Wczytanie koszyka z localStorage (jeśli jest)
+function loadCartState() {
+  if (typeof window === 'undefined') return undefined;
+
   try {
-    const serializedCart = localStorage.getItem('cart');
-
-    if (!serializedCart) {
-      return undefined;
-    }
-
-    const parsedCart = JSON.parse(serializedCart);
-
-    // preloadedState może być częściowe – podajemy tylko cart
-    return {
-      cart: parsedCart,
-    };
-  } catch (error) {
-    console.error('Nie udało się wczytać koszyka z localStorage:', error);
+    const serialized = localStorage.getItem(CART_STORAGE_KEY);
+    if (!serialized) return undefined;
+    return JSON.parse(serialized);
+  } catch (e) {
+    console.error('Nie udało się wczytać koszyka z localStorage', e);
     return undefined;
   }
 }
 
-/**
- * Tworzymy store z preloadedState wczytanym z localStorage.
- */
+// Stan startowy tylko dla koszyka
+const preloadedCart = loadCartState();
+
 export const store = configureStore({
   reducer: {
-    products: productsReducer,
     cart: cartReducer,
+    products: productsReducer,
+    // jeśli masz inne reducery, dopisz je tutaj
   },
-  preloadedState: loadCartFromStorage(),
+  // jeśli coś jest w localStorage → użyj tego jako startu
+  preloadedState: preloadedCart ? { cart: preloadedCart } : undefined,
 });
 
-/**
- * Za każdym razem, gdy stan się zmieni, zapisujemy koszyk do localStorage.
- */
+// Zapisywanie koszyka przy każdej zmianie stanu
 store.subscribe(() => {
+  if (typeof window === 'undefined') return;
+
   try {
     const state = store.getState();
-    const serializedCart = JSON.stringify(state.cart);
-    localStorage.setItem('cart', serializedCart);
-  } catch (error) {
-    console.error('Nie udało się zapisać koszyka do localStorage:', error);
+    const cartState = state.cart; // cały slice koszyka
+    const serialized = JSON.stringify(cartState);
+    localStorage.setItem(CART_STORAGE_KEY, serialized);
+  } catch (e) {
+    console.error('Nie udało się zapisać koszyka do localStorage', e);
   }
 });
 
+// Typy
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
