@@ -5,6 +5,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store';
 import { addToCart } from '../features/cartSlice';
+import { API_URL } from '../api';
 
 type ProductImage = {
   id: number;
@@ -18,7 +19,7 @@ type Product = {
   description: string;
   price: number;
   mainImage: string;
-  images?: ProductImage[]; // <- dodatkowe zdjęcia (wymaganie Kodilla)
+  images?: ProductImage[];
 };
 
 const ProductPage: React.FC = () => {
@@ -33,7 +34,11 @@ const ProductPage: React.FC = () => {
   useEffect(() => {
     const loadProduct = async () => {
       try {
-        const res = await fetch(`/products/${slug}`);
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(`${API_URL}/products/${slug}`);
+
         if (!res.ok) throw new Error('HTTP ' + res.status);
 
         const raw = await res.json();
@@ -46,13 +51,14 @@ const ProductPage: React.FC = () => {
 
         setProduct(normalized);
       } catch (err: any) {
-        setError(err.message ?? 'Fehler beim Laden des Produkts');
+        setError(err?.message ?? 'Fehler beim Laden des Produkts');
+        setProduct(null);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProduct();
+    if (slug) loadProduct();
   }, [slug]);
 
   const handleAddToCart = () => {
@@ -62,7 +68,11 @@ const ProductPage: React.FC = () => {
 
   if (loading) return <div className="card">Lade Produkt…</div>;
   if (error || !product)
-    return <div className="card">Fehler: {error ?? 'Produkt nicht gefunden'}</div>;
+    return (
+      <div className="card">
+        Fehler: {error ?? 'Produkt nicht gefunden'}
+      </div>
+    );
 
   return (
     <div className="card">
@@ -74,7 +84,6 @@ const ProductPage: React.FC = () => {
 
       <p style={{ margin: '1rem 0' }}>{product.description}</p>
 
-      {/* DODATKOWE ZDJĘCIA (wymaganie Kodilla) */}
       {product.images && product.images.length > 0 && (
         <div style={{ margin: '1rem 0' }}>
           <p style={{ marginBottom: '0.5rem' }}>
@@ -83,29 +92,28 @@ const ProductPage: React.FC = () => {
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {product.images.map((img) => (
-           <img
-  key={img.id}
-  src={img.url}
-  alt={`${product.name} - ${img.id}`}
-  style={{
-    width: 140,
-    height: 90,
-    objectFit: 'cover',
-    border: '1px solid #ccc',
-  }}
-  onError={(e) => {
-    const target = e.currentTarget;
-    target.onerror = null; // żeby nie zapętlić
-    target.src = 'https://picsum.photos/seed/finalshop-' + img.id + '/300/200';
-  }}
-/>
-
+              <img
+                key={img.id}
+                src={img.url}
+                alt={`${product.name} - ${img.id}`}
+                style={{
+                  width: 140,
+                  height: 90,
+                  objectFit: 'cover',
+                  border: '1px solid #ccc',
+                }}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.onerror = null;
+                  target.src =
+                    'https://picsum.photos/seed/finalshop-' + img.id + '/300/200';
+                }}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* ilość + przycisk */}
       <div style={{ margin: '1rem 0' }}>
         <label>
           Menge:{' '}
@@ -113,11 +121,15 @@ const ProductPage: React.FC = () => {
             type="number"
             min={1}
             value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) =>
+              setQuantity(Math.max(1, Number(e.target.value) || 1))
+            }
             style={{ width: '80px', marginRight: '0.5rem' }}
           />
         </label>
-        <button onClick={handleAddToCart}>In den Warenkorb</button>
+        <button type="button" onClick={handleAddToCart}>
+          In den Warenkorb
+        </button>
       </div>
 
       <p>

@@ -12,6 +12,7 @@ import {
   setError,
 } from '../features/productsSlice';
 import { addToCart } from '../features/cartSlice';
+import { API_URL } from '../api';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -26,7 +27,8 @@ const HomePage: React.FC = () => {
         dispatch(setLoading(true));
         dispatch(setError(null));
 
-        const res = await fetch('/products');
+      const res = await fetch(`${API_URL}/products`);
+
         if (!res.ok) {
           throw new Error('HTTP ' + res.status);
         }

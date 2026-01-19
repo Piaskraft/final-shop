@@ -51,7 +51,7 @@ const CartPage: React.FC = () => {
                   dispatch(
                     updateQuantity({
                       productId: item.product.id,
-                      quantity: Number(e.target.value) || 1,
+                      quantity: Math.max(1, Number(e.target.value) || 1),
                     })
                   )
                 }
@@ -73,7 +73,7 @@ const CartPage: React.FC = () => {
                   type="text"
                   style={{ width: '60%' }}
                   placeholder="z.B. Bitte als Geschenk verpacken"
-                  value={item.note}
+                  value={item.note ?? ''}
                   onChange={(e) =>
                     dispatch(
                       updateNote({

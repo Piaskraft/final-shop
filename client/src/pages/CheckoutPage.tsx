@@ -11,6 +11,7 @@ import {
   selectCartTotal,
   clearCart,
 } from '../features/cartSlice';
+import { API_URL } from '../api';
 
 const CheckoutPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,7 +29,7 @@ const CheckoutPage: React.FC = () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-   const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   // widok po udanym zamówieniu
   if (success) {
@@ -43,7 +44,7 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  // zwykły pusty koszyk (gdy ktoś wejdzie na /checkout bez produktów)
+  // pusty koszyk
   if (items.length === 0) {
     return (
       <div className="card">
@@ -62,7 +63,7 @@ const CheckoutPage: React.FC = () => {
     setSubmitError(null);
 
     try {
-      const response = await fetch('/orders', {
+      const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,9 +91,7 @@ const CheckoutPage: React.FC = () => {
       setSuccess(true);
       dispatch(clearCart());
     } catch (err: any) {
-      setSubmitError(
-        err?.message || 'Fehler beim Absenden der Bestellung',
-      );
+      setSubmitError(err?.message || 'Fehler beim Absenden der Bestellung');
     } finally {
       setSubmitting(false);
     }
@@ -103,8 +102,8 @@ const CheckoutPage: React.FC = () => {
       <h1>Bestellung abschließen</h1>
 
       <p>
-        Hier siehst du eine Zusammenfassung deiner Bestellung und kannst
-        deine Kontaktdaten eingeben.
+        Hier siehst du eine Zusammenfassung deiner Bestellung und kannst deine
+        Kontaktdaten eingeben.
       </p>
 
       <h2 style={{ marginTop: '1rem' }}>Warenkorbübersicht</h2>
@@ -124,19 +123,9 @@ const CheckoutPage: React.FC = () => {
 
       <h2 style={{ marginTop: '2rem' }}>Rechnungsdaten</h2>
 
-      {submitError && (
-        <p style={{ color: 'red' }}>Fehler: {submitError}</p>
-      )}
-      {success && (
-        <p style={{ color: 'green' }}>
-          Danke für deine Bestellung! Wir haben deine Daten erhalten.
-        </p>
-      )}
+      {submitError && <p style={{ color: 'red' }}>Fehler: {submitError}</p>}
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ marginTop: '1rem', maxWidth: 400 }}
-      >
+      <form onSubmit={handleSubmit} style={{ marginTop: '1rem', maxWidth: 400 }}>
         <div style={{ marginBottom: '0.5rem' }}>
           <label>
             Name*:
@@ -234,9 +223,7 @@ const CheckoutPage: React.FC = () => {
         </div>
 
         <button type="submit" disabled={submitting}>
-          {submitting
-            ? 'Bestellung wird gesendet...'
-            : 'Bestellung absenden'}
+          {submitting ? 'Bestellung wird gesendet...' : 'Bestellung absenden'}
         </button>
       </form>
 
