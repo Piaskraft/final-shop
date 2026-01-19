@@ -4,18 +4,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
- 
   app.enableCors({
     origin: [
+      'https://final-shop-1.onrender.com',
       'http://localhost:3000',
-      'http://localhost:3001',
     ],
-    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-const port = process.env.PORT || 3001;
-await app.listen(port, '0.0.0.0');
-
-
+  await app.listen(process.env.PORT || 3001);
 }
 bootstrap();
