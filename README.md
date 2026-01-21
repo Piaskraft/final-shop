@@ -1,4 +1,4 @@
-Dobra — struktura jest prosta i OK. Teraz robimy **1 krok**: robisz **główny README w root**, a `backend/README.md` i `client/README.md` zostają (mogą być, nie przeszkadzają).
+.
 
 ## KROK 1 (zrób teraz)
 
@@ -77,7 +77,7 @@ W Render → Static Site → Environment:
 
 W Render → Web Service → Environment:
 
-* `DATABASE_URL` = postgresql://final_shop_db_user:qXd6NlqOheeQelHVoSLnIAA5lfD0xe8J@dpg-d5jup71r0fns73dd1b5g-a.frankfurt-postgres.render.com/final_shop_db
+* `DATABASE_URL` =
 * `PORT` = (Render ustawia sam, app używa `process.env.PORT`)
 
 ---
