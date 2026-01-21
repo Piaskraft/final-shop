@@ -1,8 +1,5 @@
 .
 
-## KROK 1 (zrób teraz)
-
-W folderze głównym **final-shop/** utwórz/otwórz plik **`README.md`** (ten przy root `.gitignore`) i wklej to:
 
 # Final Shop (Piaskraft Mini) — Abschlussprojekt
 
