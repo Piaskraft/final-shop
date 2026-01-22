@@ -6,11 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState, AppDispatch } from '../store';
 import type { CartItem } from '../features/cartSlice';
-import {
-  selectCartItems,
-  selectCartTotal,
-  clearCart,
-} from '../features/cartSlice';
+import { selectCartItems, selectCartTotal, clearCart } from '../features/cartSlice';
 import { API_URL } from '../api';
 
 const CheckoutPage: React.FC = () => {
@@ -31,7 +27,6 @@ const CheckoutPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // widok po udanym zamówieniu
   if (success) {
     return (
       <div className="card">
@@ -44,7 +39,6 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  // pusty koszyk
   if (items.length === 0) {
     return (
       <div className="card">
@@ -100,136 +94,123 @@ const CheckoutPage: React.FC = () => {
   return (
     <div className="card">
       <h1>Bestellung abschließen</h1>
-
       <p>
-        Hier siehst du eine Zusammenfassung deiner Bestellung und kannst deine
-        Kontaktdaten eingeben.
+        Hier siehst du eine Zusammenfassung deiner Bestellung und kannst deine Kontaktdaten eingeben.
       </p>
 
-      <h2 style={{ marginTop: '1rem' }}>Warenkorbübersicht</h2>
-      <ul>
-        {items.map((item) => (
-          <li key={item.product.id}>
-            {item.product.name} × {item.quantity} –{' '}
-            {item.product.price.toFixed(2)} € (Zwischensumme:{' '}
-            {(item.product.price * item.quantity).toFixed(2)} €)
-          </li>
-        ))}
-      </ul>
+      <div className="checkout-grid">
+        {/* LEFT: form */}
+        <div className="checkout-box">
+          <h2>Rechnungsdaten</h2>
 
-      <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>
-        Gesamt: {total.toFixed(2)} €
-      </p>
+          {submitError && <div className="error-box">Fehler: {submitError}</div>}
 
-      <h2 style={{ marginTop: '2rem' }}>Rechnungsdaten</h2>
+          <form onSubmit={handleSubmit} style={{ marginTop: 12 }}>
+            <div className="form-grid">
+              <label className="full">
+                Name*:
+                <input
+                  type="text"
+                  required
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+              </label>
 
-      {submitError && <p style={{ color: 'red' }}>Fehler: {submitError}</p>}
+              <label className="full">
+                E-Mail*:
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
 
-      <form onSubmit={handleSubmit} style={{ marginTop: '1rem', maxWidth: 400 }}>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            Name*:
-            <br />
-            <input
-              type="text"
-              required
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </label>
+              <label className="full">
+                Telefon:
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </label>
+
+              <label className="full">
+                Straße und Hausnummer*:
+                <input
+                  type="text"
+                  required
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                />
+              </label>
+
+              <label>
+                Postleitzahl*:
+                <input
+                  type="text"
+                  required
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                />
+              </label>
+
+              <label>
+                Ort*:
+                <input
+                  type="text"
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
+              </label>
+
+              <label className="full">
+                Notiz zur Bestellung:
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <Link to="/cart">Zurück zum Warenkorb</Link>
+
+              <button type="submit" disabled={submitting}>
+                {submitting ? 'Bestellung wird gesendet...' : 'Bestellung absenden'}
+              </button>
+            </div>
+          </form>
         </div>
 
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            E-Mail*:
-            <br />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </label>
+        {/* RIGHT: summary */}
+        <div className="checkout-box">
+          <h2>Warenkorbübersicht</h2>
+
+          <div className="checkout-summary" style={{ marginTop: 10 }}>
+            {items.map((item) => (
+              <div className="checkout-item" key={item.product.id}>
+                <div>
+                  <strong>{item.product.name}</strong>
+                  <small>
+                    {item.quantity} × {Number(item.product.price).toFixed(2)} €
+                  </small>
+                </div>
+                <div>
+                  <strong>
+                    {(Number(item.product.price) * item.quantity).toFixed(2)} €
+                  </strong>
+                </div>
+              </div>
+            ))}
+
+            <div className="checkout-total">Gesamt: {total.toFixed(2)} €</div>
+          </div>
         </div>
-
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            Telefon:
-            <br />
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            Straße und Hausnummer*:
-            <br />
-            <input
-              type="text"
-              required
-              value={street}
-              onChange={(e) => setStreet(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            Postleitzahl*:
-            <br />
-            <input
-              type="text"
-              required
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            Ort*:
-            <br />
-            <input
-              type="text"
-              required
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>
-            Notiz zur Bestellung:
-            <br />
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              style={{ width: '100%' }}
-            />
-          </label>
-        </div>
-
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Bestellung wird gesendet...' : 'Bestellung absenden'}
-        </button>
-      </form>
-
-      <p style={{ marginTop: '1rem' }}>
-        <Link to="/cart">Zurück zum Warenkorb</Link>
-      </p>
+      </div>
     </div>
   );
 };

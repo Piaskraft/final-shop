@@ -37,16 +37,22 @@ const CartPage: React.FC = () => {
     <div className="card">
       <h1>Warenkorb</h1>
 
-      <ul>
+      <div className="cart-list">
         {items.map((item) => (
-          <li key={item.product.id} style={{ marginBottom: '1rem' }}>
-            <div>
-              {item.product.name} ×{' '}
+          <div key={item.product.id}>
+            <div className="cart-row">
+              <div>
+                <strong>{item.product.name}</strong>
+                <small>
+                  Einzelpreis: {Number(item.product.price).toFixed(2)} € • Summe:{' '}
+                  {(Number(item.product.price) * item.quantity).toFixed(2)} €
+                </small>
+              </div>
+
               <input
                 type="number"
                 min={1}
                 value={item.quantity}
-                style={{ width: '4rem' }}
                 onChange={(e) =>
                   dispatch(
                     updateQuantity({
@@ -55,23 +61,21 @@ const CartPage: React.FC = () => {
                     })
                   )
                 }
-              />{' '}
-              – {(item.product.price * item.quantity).toFixed(2)} €
+              />
+
               <button
                 type="button"
                 onClick={() => dispatch(removeFromCart(item.product.id))}
-                style={{ marginLeft: '0.5rem' }}
               >
                 Entfernen
               </button>
             </div>
 
-            <div style={{ marginTop: '0.25rem' }}>
+            <div className="cart-note">
               <label>
-                Notiz zur Bestellung:{' '}
+                Notiz zur Bestellung
                 <input
                   type="text"
-                  style={{ width: '60%' }}
                   placeholder="z.B. Bitte als Geschenk verpacken"
                   value={item.note ?? ''}
                   onChange={(e) =>
@@ -85,21 +89,23 @@ const CartPage: React.FC = () => {
                 />
               </label>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
-      <p style={{ fontWeight: 'bold' }}>Summe: {total.toFixed(2)} €</p>
+      <div className="cart-actions">
+        <div style={{ marginRight: 'auto', fontWeight: 800 }}>
+          Summe: {total.toFixed(2)} €
+        </div>
 
-      <div style={{ marginTop: '1rem' }}>
         <button type="button" onClick={() => dispatch(clearCart())}>
           Warenkorb leeren
         </button>
-      </div>
 
-      <p style={{ marginTop: '1rem' }}>
-        <Link to="/checkout">Zur Kasse</Link>
-      </p>
+        <Link to="/checkout">
+          <button type="button">Zur Kasse</button>
+        </Link>
+      </div>
     </div>
   );
 };
