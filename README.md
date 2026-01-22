@@ -1,14 +1,15 @@
-.
+# Final Shop (Piaskraft Mini)
+
+✅ Live demo (Render): https://final-shop-1.onrender.com  
+✅ API https://final-shop-qoz3.onrender.com/products
+Repo: https://github.com/Piaskraft/final-shop
 
 
 # Final Shop (Piaskraft Mini) — Abschlussprojekt
 
 A demo e-commerce app: **React (frontend)** + **NestJS (backend)** + **Prisma (PostgreSQL)**.
 
-## Live (Render)
 
-* **Frontend (Static Site):** [https://final-shop-1.onrender.com](https://final-shop-1.onrender.com)
-* **Backend (API / Web Service):** [https://final-shop-qoz3.onrender.com](https://final-shop-qoz3.onrender.com)
 
 ## Repo structure
 

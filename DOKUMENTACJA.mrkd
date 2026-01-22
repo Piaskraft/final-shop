@@ -1,0 +1,53 @@
+# Dokumentacja – Final Shop (Piaskraft Mini)
+
+## 1) Cel projektu
+Final Shop (Piaskraft Mini) to prosta aplikacja typu sklep internetowy:
+- wyświetla listę produktów,
+- pozwala wejść w szczegóły produktu,
+- umożliwia dodanie produktu do koszyka,
+- umożliwia złożenie zamówienia (checkout),
+- zapisuje zamówienie w bazie danych (backend + Prisma).
+
+## 2) Jak uruchomić lokalnie (krok po kroku)
+
+### Wymagania
+- Node.js (zalecane 18+)
+- npm
+
+### Backend (NestJS)
+1. Przejdź do folderu backend:
+   - `cd backend`
+2. Zainstaluj zależności:
+   - `npm install`
+3. Ustaw zmienne środowiskowe w pliku `.env`:
+   - `DATABASE_URL=...`
+4. Uruchom backend:
+   - `npm run start:dev`
+Backend domyślnie działa na porcie `3001`.
+
+### Frontend (React)
+1. Przejdź do folderu client:
+   - `cd client`
+2. Zainstaluj zależności:
+   - `npm install`
+3. (Opcjonalnie) ustaw zmienną:
+   - `REACT_APP_API_URL=http://localhost:3001`
+4. Uruchom frontend:
+   - `npm start`
+Frontend domyślnie działa na porcie `3000`.
+
+## 3) Dodatkowe informacje techniczne (API / autoryzacja / konfiguracja)
+
+### Baza danych
+Projekt używa Prisma + baza PostgreSQL (np. Render/FreeDB).
+Dostęp jest realizowany przez `DATABASE_URL` w backend/.env.
+
+### Komunikacja front ↔ backend
+Frontend pobiera adres API z:
+- zmiennej `REACT_APP_API_URL` (Render / lokalnie),
+- lub fallbacku ustawionego w kodzie.
+
+### Render
+- Front działa jako **Static Site**.
+- Backend działa jako **Web Service**.
+- Na darmowym planie backend może “usypiać” po bezczynności i pierwsze żądanie może być wolniejsze.
