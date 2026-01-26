@@ -1,17 +1,60 @@
 // backend/src/orders/dto/create-order.dto.ts
+import {
+  ArrayMinSize,
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class CreateOrderItemDto {
+  @IsInt()
+  @Min(1)
+  productId: number;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
 export class CreateOrderDto {
+  @IsString()
+  @IsNotEmpty()
   name: string;
+
+  @IsEmail()
   email: string;
+
+  @IsOptional()
+  @IsString()
   phone?: string;
+
+  @IsString()
+  @IsNotEmpty()
   street: string;
+
+  @IsString()
+  @IsNotEmpty()
   postalCode: string;
+
+  @IsString()
+  @IsNotEmpty()
   city: string;
+
+  @IsOptional()
+  @IsString()
   note?: string;
 
-  items: {
-    productId: number;
-    quantity: number;
-    note?: string;
-    // price z frontu nas nie interesuje – bierzemy go z bazy
-  }[];
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemDto)
+  @ArrayMinSize(1)
+  items: CreateOrderItemDto[];
 }
