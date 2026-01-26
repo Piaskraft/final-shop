@@ -5,7 +5,7 @@ import { join } from 'path';
 import { ProductsModule } from './products/products.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OrdersModule } from './orders/orders.module';
-
+import { CategoriesModule } from './categories/categories.module';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
@@ -14,6 +14,7 @@ import { OrdersModule } from './orders/orders.module';
     PrismaModule,
     ProductsModule,
     OrdersModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}
