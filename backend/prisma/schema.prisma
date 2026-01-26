@@ -8,31 +8,44 @@ generator client {
 }
 
 model Product {
-  id          Int           @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
-  slug        String        @unique
+  slug        String  @unique
   description String
-  price       Decimal       @db.Decimal(10, 2)
+  price       Decimal @db.Decimal(10, 2)
   mainImage   String
 
-  images      ProductImage[]
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  images     ProductImage[]
+  orderItems OrderItem[]
 
-  orderItems  OrderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String
+  slug String @unique
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ProductImage {
-  id        Int      @id @default(autoincrement())
-  url       String
+  id  Int    @id @default(autoincrement())
+  url String
 
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
 }
 
 model Order {
-  id           Int         @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   customerName String
   email        String
   phone        String?
@@ -41,23 +54,23 @@ model Order {
   postalCode   String
   notes        String?
 
-  totalAmount  Decimal      @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(10, 2)
 
-  createdAt    DateTime     @default(now())
+  createdAt DateTime @default(now())
 
-  items        OrderItem[]
+  items OrderItem[]
 }
 
 model OrderItem {
-  id         Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId    Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId Int
 
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
 
-  quantity   Int
-  unitPrice  Decimal  @db.Decimal(10, 2)
-  itemNote   String?
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  itemNote  String?
 }
