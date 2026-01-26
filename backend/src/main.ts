@@ -25,6 +25,7 @@ async function bootstrap() {
   credentials: true,
 });
 
+app.enableShutdownHooks();
 
   await app.listen(process.env.PORT || 3001);
 }
