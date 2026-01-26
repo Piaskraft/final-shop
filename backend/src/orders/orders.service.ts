@@ -1,53 +1,40 @@
-// backend/src/orders/orders.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateOrderDto) {
     const { name, email, phone, street, postalCode, city, note, items } = data;
 
-    // Bezpieczne wyliczenie customerName – nawet jeśli w DTO pole nazywa się inaczej
+    // bezpieczna nazwa klienta
     const anyData = data as any;
     const customerName: string =
-      name ??
-      anyData.customerName ??
-      anyData.fullName ??
-      'Unbekannter Kunde';
+      name ?? anyData.customerName ?? anyData.fullName ?? 'Unbekannter Kunde';
 
-    // 1. ID produktów z koszyka
-    const productIds = items.map((item) => item.productId);
+    const productIds = items.map((i) => i.productId);
 
-    // 2. Pobieramy produkty z bazy
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
-      select: {
-        id: true,
-        price: true,
-      },
+      select: { id: true, price: true },
     });
 
-    // 3. Mapa id -> cena (number)
     const priceById = new Map<number, number>();
-
     products.forEach((p) => {
       const price =
         typeof p.price === 'number'
           ? p.price
-          : (p.price as any).toNumber
+          : (p.price as any)?.toNumber
           ? (p.price as any).toNumber()
           : Number(p.price);
-
       priceById.set(p.id, price);
     });
 
-    // 4. Dane pozycji zamówienia
     const orderItemsData = items.map((item) => {
       const unitPrice = priceById.get(item.productId);
-
       if (unitPrice === undefined) {
         throw new Error(`Produkt o id=${item.productId} nie istnieje`);
       }
@@ -56,22 +43,18 @@ export class OrdersService {
         quantity: item.quantity,
         unitPrice,
         itemNote: item.note ?? '',
-        product: {
-          connect: { id: item.productId },
-        },
+        product: { connect: { id: item.productId } },
       };
     });
 
-    // 5. Suma zamówienia
     const totalAmount = orderItemsData.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
 
-    // 6. Tworzymy zamówienie w Prisma
     return this.prisma.order.create({
       data: {
-        customerName,        // <<< TERAZ ZAWSZE JEST STRING
+        customerName,
         email,
         phone,
         street,
@@ -79,12 +62,14 @@ export class OrdersService {
         city,
         notes: note ?? '',
         totalAmount,
-        items: {
-          create: orderItemsData,
-        },
+        items: { create: orderItemsData },
       },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
       },
     });
   }
@@ -92,7 +77,120 @@ export class OrdersService {
   findAll() {
     return this.prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        items: {
+          include: { product: true },
+        },
+      },
+    });
+  }
+
+  getById(id: number) {
+    return this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: { product: true },
+        },
+      },
+    });
+  }
+
+  async update(id: number, dto: UpdateOrderDto) {
+    // bierzemy dane bazowe, bo totalAmount zależy od items
+    const existing = await this.prisma.order.findUnique({
+      where: { id },
       include: { items: true },
+    });
+
+    if (!existing) return null;
+
+    const anyDto = dto as any;
+    const customerName =
+      dto.name ?? anyDto.customerName ?? anyDto.fullName ?? undefined;
+
+    // jeśli items nie przyszły -> aktualizujemy tylko pola w Order
+    if (!dto.items) {
+      return this.prisma.order.update({
+        where: { id },
+        data: {
+          ...(customerName !== undefined ? { customerName } : {}),
+          ...(dto.email !== undefined ? { email: dto.email } : {}),
+          ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
+          ...(dto.street !== undefined ? { street: dto.street } : {}),
+          ...(dto.postalCode !== undefined ? { postalCode: dto.postalCode } : {}),
+          ...(dto.city !== undefined ? { city: dto.city } : {}),
+          ...(dto.note !== undefined ? { notes: dto.note ?? '' } : {}),
+        },
+        include: {
+          items: { include: { product: true } },
+        },
+      });
+    }
+
+    // jeśli items przyszły -> przeliczamy total i podmieniamy itemy (deleteMany + create)
+    const productIds = dto.items.map((i) => i.productId);
+
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, price: true },
+    });
+
+    const priceById = new Map<number, number>();
+    products.forEach((p) => {
+      const price =
+        typeof p.price === 'number'
+          ? p.price
+          : (p.price as any)?.toNumber
+          ? (p.price as any).toNumber()
+          : Number(p.price);
+      priceById.set(p.id, price);
+    });
+
+    const orderItemsData = dto.items.map((item) => {
+      const unitPrice = priceById.get(item.productId);
+      if (unitPrice === undefined) {
+        throw new Error(`Produkt o id=${item.productId} nie istnieje`);
+      }
+
+      return {
+        quantity: item.quantity,
+        unitPrice,
+        itemNote: item.note ?? '',
+        product: { connect: { id: item.productId } },
+      };
+    });
+
+    const totalAmount = orderItemsData.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+
+    return this.prisma.order.update({
+      where: { id },
+      data: {
+        ...(customerName !== undefined ? { customerName } : {}),
+        ...(dto.email !== undefined ? { email: dto.email } : {}),
+        ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
+        ...(dto.street !== undefined ? { street: dto.street } : {}),
+        ...(dto.postalCode !== undefined ? { postalCode: dto.postalCode } : {}),
+        ...(dto.city !== undefined ? { city: dto.city } : {}),
+        ...(dto.note !== undefined ? { notes: dto.note ?? '' } : {}),
+        totalAmount,
+        items: {
+          deleteMany: {},
+          create: orderItemsData,
+        },
+      },
+      include: {
+        items: { include: { product: true } },
+      },
+    });
+  }
+
+  remove(id: number) {
+    return this.prisma.order.delete({
+      where: { id },
     });
   }
 }
