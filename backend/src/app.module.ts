@@ -6,6 +6,8 @@ import { ProductsModule } from './products/products.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
+import { UsersModule } from './users/users.module';
+
 @Module({
   imports: [
     ServeStaticModule.forRoot({
@@ -15,6 +17,7 @@ import { CategoriesModule } from './categories/categories.module';
     ProductsModule,
     OrdersModule,
     CategoriesModule,
+    UsersModule,
   ],
 })
 export class AppModule {}
