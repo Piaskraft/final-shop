@@ -22,7 +22,7 @@ export class CreateOrderItemDto {
 
   @IsOptional()
   @IsString()
-  note?: string;
+  notes?: string;
 }
 
 export class CreateOrderDto {
@@ -51,7 +51,7 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
-  note?: string;
+  notes?: string;
 
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)

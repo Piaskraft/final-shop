@@ -8,7 +8,7 @@ export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateOrderDto) {
-    const { name, email, phone, street, postalCode, city, note, items } = data;
+    const { name, email, phone, street, postalCode, city, notes, items } = data;
 
     // bezpieczna nazwa klienta
     const anyData = data as any;
@@ -42,7 +42,7 @@ export class OrdersService {
       return {
         quantity: item.quantity,
         unitPrice,
-        itemNote: item.note ?? '',
+        itemNote: item.notes ?? '',
         product: { connect: { id: item.productId } },
       };
     });
@@ -60,7 +60,7 @@ export class OrdersService {
         street,
         postalCode,
         city,
-        notes: note ?? '',
+        notes: notes ?? '',
         totalAmount,
         items: { create: orderItemsData },
       },
@@ -120,7 +120,7 @@ export class OrdersService {
           ...(dto.street !== undefined ? { street: dto.street } : {}),
           ...(dto.postalCode !== undefined ? { postalCode: dto.postalCode } : {}),
           ...(dto.city !== undefined ? { city: dto.city } : {}),
-          ...(dto.note !== undefined ? { notes: dto.note ?? '' } : {}),
+          ...(dto.notes !== undefined ? { notes: dto.notes ?? '' } : {}),
         },
         include: {
           items: { include: { product: true } },
@@ -156,7 +156,7 @@ export class OrdersService {
       return {
         quantity: item.quantity,
         unitPrice,
-        itemNote: item.note ?? '',
+        itemNote: item.notes ?? '',
         product: { connect: { id: item.productId } },
       };
     });
@@ -175,7 +175,7 @@ export class OrdersService {
         ...(dto.street !== undefined ? { street: dto.street } : {}),
         ...(dto.postalCode !== undefined ? { postalCode: dto.postalCode } : {}),
         ...(dto.city !== undefined ? { city: dto.city } : {}),
-        ...(dto.note !== undefined ? { notes: dto.note ?? '' } : {}),
+        ...(dto.notes !== undefined ? { notes: dto.notes ?? '' } : {}),
         totalAmount,
         items: {
           deleteMany: {},
