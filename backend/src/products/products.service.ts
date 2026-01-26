@@ -36,7 +36,7 @@ export class ProductsService {
         price: dto.price,
         description: dto.description ?? '',
         mainImage: dto.mainImage,
- // REQUIRED in Prisma schema
+        // REQUIRED in Prisma schema
       },
       include: { images: true },
     });
@@ -49,7 +49,9 @@ export class ProductsService {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
         ...(dto.price !== undefined ? { price: dto.price } : {}),
-        ...(dto.description !== undefined ? { description: dto.description ?? '' } : {}),
+        ...(dto.description !== undefined
+          ? { description: dto.description ?? '' }
+          : {}),
       },
       include: { images: true },
     });

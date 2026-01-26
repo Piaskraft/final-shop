@@ -1,13 +1,20 @@
-// backend/src/orders/orders.module.ts
-// backend/src/orders/orders.module.ts
 import { Module } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { PrismaService } from '../prisma/prisma.service';
+import { PrismaOrdersRepository } from './prisma-orders.repository';
+import { ORDERS_REPOSITORY } from './orders.repository';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [
+    OrdersService,
+    PrismaService,
+    PrismaOrdersRepository,
+    {
+      provide: ORDERS_REPOSITORY,
+      useExisting: PrismaOrdersRepository,
+    },
+  ],
 })
 export class OrdersModule {}
