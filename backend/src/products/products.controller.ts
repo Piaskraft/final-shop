@@ -17,7 +17,8 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Get('id/:id')
+  // ✅ pod e2e: /products/123 -> ParseIntPipe działa, /products/abc -> 400
+  @Get(':id')
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.getById(id);
   }
@@ -27,12 +28,12 @@ export class ProductsController {
     return this.productsService.create(dto);
   }
 
-  @Patch('id/:id')
+  @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
   }
 
-  @Delete('id/:id')
+  @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.remove(id);
   }
@@ -42,7 +43,8 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-  @Get(':slug')
+  // ✅ slug przeniesiony, żeby nie kolidował z :id
+  @Get('slug/:slug')
   async findOne(@Param('slug') slug: string) {
     const product = await this.productsService.findOneBySlug(slug);
 

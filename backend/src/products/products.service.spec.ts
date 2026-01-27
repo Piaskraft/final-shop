@@ -36,7 +36,9 @@ describe('ProductsService', () => {
   it('getById(): throws NotFoundException when product not found', async () => {
     productMock.findUnique.mockResolvedValue(null);
 
-    await expect(service.getById(999)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getById(999)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('findAll(): returns list', async () => {
@@ -46,4 +48,3 @@ describe('ProductsService', () => {
     expect(result).toHaveLength(2);
   });
 });
-

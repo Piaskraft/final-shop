@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -14,18 +14,30 @@ export class ProductsService {
     });
   }
 
-  findOneBySlug(slug: string) {
-    return this.prisma.product.findUnique({
+  async findOneBySlug(slug: string) {
+    const product = await this.prisma.product.findUnique({
       where: { slug },
       include: { images: true },
     });
+
+    if (!product) {
+      throw new NotFoundException(`Product slug="${slug}" nie istnieje.`);
+    }
+
+    return product;
   }
 
-  getById(id: number) {
-    return this.prisma.product.findUnique({
+  async getById(id: number) {
+    const product = await this.prisma.product.findUnique({
       where: { id },
       include: { images: true },
     });
+
+    if (!product) {
+      throw new NotFoundException(`Product id=${id} nie istnieje.`);
+    }
+
+    return product;
   }
 
   create(dto: CreateProductDto) {
@@ -36,7 +48,6 @@ export class ProductsService {
         price: dto.price,
         description: dto.description ?? '',
         mainImage: dto.mainImage,
-        // REQUIRED in Prisma schema
       },
       include: { images: true },
     });

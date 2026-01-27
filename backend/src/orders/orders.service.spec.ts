@@ -3,6 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ORDERS_REPOSITORY } from './orders.repository';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -37,23 +38,27 @@ describe('OrdersService', () => {
   });
 
   it('create(): throws BadRequestException when items is empty', async () => {
-    await expect(
-      service.create({
-        name: 'Aga',
-        email: 'a@a.com',
-        phone: '123',
-        street: 'Test',
-        postalCode: '00-000',
-        city: 'City',
-        notes: '',
-        items: [],
-      } as any),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    const dto: CreateOrderDto = {
+      name: 'Aga',
+      email: 'a@a.com',
+      phone: '123',
+      street: 'Test',
+      postalCode: '00-000',
+      city: 'City',
+      notes: '',
+      items: [],
+    };
+
+    await expect(service.create(dto)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('getById(): throws NotFoundException when order does not exist', async () => {
     ordersRepoMock.findByIdWithItems.mockResolvedValue(null);
 
-    await expect(service.getById(999)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getById(999)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });
