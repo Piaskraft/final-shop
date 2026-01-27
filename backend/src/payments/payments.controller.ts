@@ -1,0 +1,24 @@
+import { Body, Controller, Post } from '@nestjs/common';
+import { PaymentsService } from './payments.service';
+import { OrdersService } from '../orders/orders.service';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+
+@Controller('payments')
+export class PaymentsController {
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly ordersService: OrdersService,
+  ) {}
+
+  @Post('payment-intent')
+  async create(@Body() dto: CreatePaymentIntentDto) {
+    const order = await this.ordersService.getById(dto.orderId);
+
+    const intent = await this.paymentsService.createPaymentIntent({
+      amountEur: order.totalAmount,
+      metadata: { orderId: String(order.id) },
+    });
+
+    return { id: intent.id, clientSecret: intent.client_secret };
+  }
+}

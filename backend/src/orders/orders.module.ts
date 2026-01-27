@@ -16,5 +16,6 @@ import { ORDERS_REPOSITORY } from './orders.repository';
       useExisting: PrismaOrdersRepository,
     },
   ],
+  exports: [OrdersService],
 })
 export class OrdersModule {}
