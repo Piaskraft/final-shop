@@ -1,16 +1,12 @@
-type DecimalLike = { toNumber: () => number };
+export function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback;
+  }
 
-function isDecimalLike(value: unknown): value is DecimalLike {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'toNumber' in value &&
-    typeof (value as Record<string, unknown>).toNumber === 'function'
-  );
-}
+  if (typeof value === 'string') {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
 
-export function toNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (isDecimalLike(value)) return value.toNumber();
-  return Number(value);
+  return fallback;
 }
