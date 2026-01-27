@@ -5,13 +5,13 @@ import {
   Get,
   NotFoundException,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { toNumber } from '../common/utils/toNumber';
 
 @Controller('orders')
 export class OrdersController {
@@ -28,24 +28,24 @@ export class OrdersController {
   }
 
   @Get('id/:id')
-  async getById(@Param('id', ParseIntPipe) id: number) {
-    const order = await this.ordersService.getById(id);
+  async getById(@Param('id') id: string) {
+    const orderId = toNumber(id);
+    const order = await this.ordersService.getById(orderId);
     if (!order) throw new NotFoundException('Order not found');
     return order;
   }
 
   @Patch('id/:id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateOrderDto,
-  ) {
-    const updated = await this.ordersService.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
+    const orderId = toNumber(id);
+    const updated = await this.ordersService.update(orderId, dto);
     if (!updated) throw new NotFoundException('Order not found');
     return updated;
   }
 
   @Delete('id/:id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.ordersService.remove(id);
+  remove(@Param('id') id: string) {
+    const orderId = toNumber(id);
+    return this.ordersService.remove(orderId);
   }
 }

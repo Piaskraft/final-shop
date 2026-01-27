@@ -72,9 +72,15 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
+   "collectCoverageFrom": [
+  "**/*.(t|j)s",
+  "!main.ts",
+  "!**/*.module.ts",
+  "!**/*repository.ts",
+  "!**/*repository.*.ts",
+  "!**/prisma-orders.repository.ts"
+],
+
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }
