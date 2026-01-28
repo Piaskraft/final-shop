@@ -13,6 +13,7 @@ import {
 } from '../features/productsSlice';
 import { addToCart } from '../features/cartSlice';
 import { api } from '../api/apiClient';
+import { ROUTES } from '../config/constants';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -95,7 +96,8 @@ const HomePage: React.FC = () => {
             </button>
 
             <div style={{ marginTop: 10 }}>
-              <Link to={`/product/${product.slug}`}>Details ansehen</Link>
+              <Link to={ROUTES.PRODUCT(product.slug)}>Details ansehen</Link>
+
             </div>
           </article>
         ))}
