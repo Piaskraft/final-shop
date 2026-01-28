@@ -69,19 +69,21 @@ const CheckoutPage: React.FC = () => {
     setSubmitError(null);
 
     try {
-      const payload = {
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim() || undefined,
-        street: street.trim(),
-        postalCode: postalCode.trim(),
-        city: city.trim(),
-        notes: notes.trim() || undefined,
-        items: items.map((item) => ({
-          productId: Number(item.product.id),
-          quantity: Number(item.quantity),
-        })),
-      };
+ const payload = {
+  name: name.trim(),
+  email: email.trim(),
+  phone: phone.trim() || undefined,
+  street: street.trim(),
+  postalCode: postalCode.trim(),
+  city: city.trim(),
+  notes: notes.trim() || undefined,
+  items: items.map((item) => ({
+    productId: Number(item.product.id),
+    quantity: Number(item.quantity),
+    notes: (item as any).note?.trim() || undefined,
+  })),
+};
+
 
       await api.post('/orders', payload);
 
