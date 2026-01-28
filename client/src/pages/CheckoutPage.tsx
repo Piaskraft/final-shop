@@ -6,7 +6,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '../store';
 import type { CartItem } from '../features/cartSlice';
 import { selectCartItems, selectCartTotal, clearCart } from '../features/cartSlice';
-import { API_URL } from '../api';
+import { API_URL } from '../config/constants';
+
 
 const CheckoutPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

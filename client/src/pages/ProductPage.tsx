@@ -5,7 +5,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 
 import { addToCart } from '../features/cartSlice';
-import { API_URL } from '../api';
+import { API_URL } from '../config/constants';
+
 
 type Product = {
   id: number;
