@@ -15,7 +15,7 @@ const CheckoutPage: React.FC = () => {
   const items = useSelector<RootState, CartItem[]>(selectCartItems);
   const total = useSelector<RootState, number>(selectCartTotal);
 
-  const [customerName, setCustomerName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [street, setStreet] = useState('');
@@ -26,6 +26,18 @@ const CheckoutPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const readErrorMessage = async (response: Response) => {
+    const text = await response.text();
+    try {
+      const data = JSON.parse(text);
+      if (Array.isArray(data?.message)) return data.message.join(', ');
+      if (typeof data?.message === 'string') return data.message;
+      return text;
+    } catch {
+      return text;
+    }
+  };
 
   if (success) {
     return (
@@ -57,14 +69,16 @@ const CheckoutPage: React.FC = () => {
     setSubmitError(null);
 
     try {
-      const address = `${street}, ${postalCode} ${city}`.trim();
-
       const payload = {
-        name: customerName.trim(),
-        email: email.trim(),
-        address,
+        name,
+        email,
+        phone: phone?.trim() ? phone.trim() : null,
+        street,
+        postalCode,
+        city,
+        notes: notes?.trim() ? notes.trim() : null,
         items: items.map((item) => ({
-          productId: Number(item.product.id),
+          productId: Number(item.product.id),   // MUST be integer
           quantity: Number(item.quantity),
         })),
       };
@@ -76,14 +90,15 @@ const CheckoutPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || `HTTP ${response.status}`);
+        const msg = await readErrorMessage(response);
+        throw new Error(msg || `HTTP ${response.status}`);
       }
 
       setSuccess(true);
       dispatch(clearCart());
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Absenden der Bestellung';
+      const message =
+        err instanceof Error ? err.message : 'Fehler beim Absenden der Bestellung';
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -98,7 +113,6 @@ const CheckoutPage: React.FC = () => {
       </p>
 
       <div className="checkout-grid">
-        {/* LEFT: form */}
         <div className="checkout-box">
           <h2>Rechnungsdaten</h2>
 
@@ -111,8 +125,8 @@ const CheckoutPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </label>
 
@@ -185,7 +199,6 @@ const CheckoutPage: React.FC = () => {
           </form>
         </div>
 
-        {/* RIGHT: summary */}
         <div className="checkout-box">
           <h2>Warenkorbübersicht</h2>
 

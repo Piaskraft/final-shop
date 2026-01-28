@@ -1,177 +1,104 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../store";
-import { addToCart } from "../features/cartSlice";
-import { API_URL } from "../api";
+// client/src/pages/ProductPage.tsx
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-  slug: string;
-}
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+
+import type { AppDispatch } from '../store';
+import { addToCart } from '../features/cartSlice';
+import type { Product } from '../features/productsSlice';
+import { API_URL } from '../api';
 
 const ProductPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [qty, setQty] = useState(1);
 
-  // karuzela
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [imgOk, setImgOk] = useState([true, true, true]); // 1..3
-
   useEffect(() => {
-    const load = async () => {
-      const res = await fetch(`${API_URL}/products/${slug}`);
-      const data = await res.json();
-      setProduct({ ...data, price: Number(data.price) });
+    let canceled = false;
 
-      // reset przy zmianie produktu
-      setQty(1);
-      setActiveIndex(0);
-      setImgOk([true, true, true]);
+    async function fetchProduct() {
+      if (!slug) return;
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(`${API_URL}/products/slug/${encodeURIComponent(slug)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as Product;
+        if (!canceled) setProduct(data);
+      } catch (err) {
+        if (!canceled) setError('Nie udało się pobrać produktu');
+      } finally {
+        if (!canceled) setLoading(false);
+      }
+    }
+
+    void fetchProduct();
+    return () => {
+      canceled = true;
     };
-    load();
   }, [slug]);
 
-  const images = useMemo(() => {
-    if (!product) return [];
-    return [
-      `/products/${product.slug}/1.jpg`,
-      `/products/${product.slug}/2.jpg`,
-      `/products/${product.slug}/3.jpg`,
-    ];
-  }, [product]);
+  const handleAdd = () => {
+    if (!product) return;
 
-  const visibleIndexes = images
-    .map((_, i) => i)
-    .filter((i) => imgOk[i]); // tylko te, które się wczytały
-
-  const safeActiveIndex = visibleIndexes.includes(activeIndex)
-    ? activeIndex
-    : (visibleIndexes[0] ?? 0);
-
-  const goPrev = () => {
-    if (visibleIndexes.length === 0) return;
-    const pos = visibleIndexes.indexOf(safeActiveIndex);
-    const nextPos = (pos - 1 + visibleIndexes.length) % visibleIndexes.length;
-    setActiveIndex(visibleIndexes[nextPos]);
+    dispatch(
+      addToCart({
+        product: {
+          id: Number(product.id),
+          name: product.name,
+          price: Number(product.price),
+        },
+        quantity: qty,
+      })
+    );
   };
 
-  const goNext = () => {
-    if (visibleIndexes.length === 0) return;
-    const pos = visibleIndexes.indexOf(safeActiveIndex);
-    const nextPos = (pos + 1) % visibleIndexes.length;
-    setActiveIndex(visibleIndexes[nextPos]);
-  };
-
-  if (!product) return <div className="card">Lade Produkt…</div>;
+  if (loading) return <div className="card">Ładowanie...</div>;
+  if (error) return <div className="card">Błąd: {error}</div>;
+  if (!product) return <div className="card">Nie znaleziono produktu.</div>;
 
   return (
-    <div className="card">
-      <div className="product-layout">
-        {/* LEFT */}
-        <div className="carousel">
-          <div className="carousel-main">
-            {visibleIndexes.length > 0 ? (
-              <>
-                <button
-                  type="button"
-                  className="carousel-btn left"
-                  onClick={goPrev}
-                  aria-label="Previous image"
-                >
-                  ‹
-                </button>
+    <div className="card product-page">
+      <p style={{ marginBottom: 10 }}>
+        <Link to="/">← Wróć</Link>
+      </p>
 
-                <img
-                  src={images[safeActiveIndex]}
-                  alt={product.name}
-                  onError={() => {
-                    setImgOk((prev) => {
-                      const copy = [...prev];
-                      copy[safeActiveIndex] = false;
-                      return copy;
-                    });
-                  }}
-                />
-
-                <button
-                  type="button"
-                  className="carousel-btn right"
-                  onClick={goNext}
-                  aria-label="Next image"
-                >
-                  ›
-                </button>
-              </>
-            ) : (
-              <div className="img-ph">Piaskraft</div>
-            )}
-          </div>
-
-          <div className="carousel-thumbs">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={
-                  "carousel-thumb" + (i === safeActiveIndex ? " active" : "")
-                }
-                onClick={() => setActiveIndex(i)}
-              >
-                {imgOk[i] ? (
-                  <img
-                    src={images[i]}
-                    alt={`${product.name} ${i + 1}`}
-                    onError={() => {
-                      setImgOk((prev) => {
-                        const copy = [...prev];
-                        copy[i] = false;
-                        return copy;
-                      });
-                    }}
-                  />
-                ) : (
-                  <div className="img-ph">Piaskraft</div>
-                )}
-              </div>
-            ))}
-          </div>
+      <div className="product-grid">
+        <div className="product-image">
+          <img
+            src={`/products/${product.slug}/1.jpg`}
+            alt={product.name}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/products/placeholder.jpg';
+            }}
+          />
         </div>
 
-        {/* RIGHT */}
-        <div>
+        <div className="product-info">
           <h1>{product.name}</h1>
-          <p>
-            <strong>{product.price.toFixed(2)} €</strong>
-          </p>
+          <p className="price">{Number(product.price).toFixed(2)} €</p>
+          <p className="desc">{product.description}</p>
 
-          <p>{product.description}</p>
+          <div className="product-actions">
+            <label>
+              Ilość:
+              <input
+                type="number"
+                min={1}
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+                style={{ width: 80, marginLeft: 8 }}
+              />
+            </label>
 
-          <div className="product-buy">
-            <input
-              type="number"
-              min={1}
-              value={qty}
-              onChange={(e) =>
-                setQty(Math.max(1, Number(e.target.value) || 1))
-              }
-            />
-
-            <button
-              type="button"
-              onClick={() => dispatch(addToCart({ product, quantity: qty }))}
-            >
-              In den Warenkorb
-            </button>
-          </div>
-
-          <div style={{ marginTop: 16 }}>
-            <Link to="/cart">Zum Warenkorb</Link>
+            <button onClick={handleAdd}>Dodaj do koszyka</button>
           </div>
         </div>
       </div>
