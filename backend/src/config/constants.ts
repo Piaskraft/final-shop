@@ -1,16 +1,14 @@
-// client/src/config/constants.ts
+// backend/src/config/constants.ts
 
-const raw = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-export const API_URL = raw.replace(/\/$/, '');
-
-export const ROUTES = {
-  HOME: '/',
-  PRODUCT: (slug: string) => `/product/${slug}`, 
-  CART: '/cart',
-  CHECKOUT: '/checkout',
+export const PAGINATION = {
+  PAGE: 1,
+  LIMIT: 10,
 } as const;
 
-
-export const UI = {
-  PAGE_SIZE: 12,
+export const DEFAULTS = {
+  CUSTOMER_NAME: 'Guest',
+  CUSTOMER_EMAIL: 'unknown@example.com',
+  ORDER_STATUS: 'PENDING',
+  PAGE: PAGINATION.PAGE,
+  LIMIT: PAGINATION.LIMIT,
 } as const;
