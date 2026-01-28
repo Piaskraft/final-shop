@@ -6,8 +6,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '../store';
 import type { CartItem } from '../features/cartSlice';
 import { selectCartItems, selectCartTotal, clearCart } from '../features/cartSlice';
-import { API_URL } from '../config/constants';
+import { api, ApiError } from '../api/apiClient';
 
+function errorMsg(err: unknown): string {
+  if (err instanceof ApiError) {
+    const d: any = err.details;
+    const m = d?.message;
+    if (Array.isArray(m)) return m.join(' | ');
+    if (typeof m === 'string') return m;
+    if (typeof d?.error === 'string') return d.error;
+    return err.message || `Request failed (${err.status})`;
+  }
+  if (err instanceof Error) return err.message;
+  return 'Fehler beim Absenden der Bestellung';
+}
 
 const CheckoutPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -71,28 +83,12 @@ const CheckoutPage: React.FC = () => {
         })),
       };
 
-      const response = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const raw = await response.text();
-        // spróbuj ładnie wyciągnąć message[] z NestJS
-        try {
-          const j = JSON.parse(raw);
-          const msg = Array.isArray(j?.message) ? j.message.join(' | ') : raw;
-          throw new Error(msg || `HTTP ${response.status}`);
-        } catch {
-          throw new Error(raw || `HTTP ${response.status}`);
-        }
-      }
+      await api.post('/orders', payload);
 
       setSuccess(true);
       dispatch(clearCart());
-    } catch (err: any) {
-      setSubmitError(err?.message || 'Fehler beim Absenden der Bestellung');
+    } catch (err) {
+      setSubmitError(errorMsg(err));
     } finally {
       setSubmitting(false);
     }

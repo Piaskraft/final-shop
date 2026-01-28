@@ -5,8 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 
 import { addToCart } from '../features/cartSlice';
-import { API_URL } from '../config/constants';
-
+import { api, ApiError } from '../api/apiClient';
 
 type Product = {
   id: number;
@@ -26,13 +25,23 @@ function buildGallery(product: Product | null): string[] {
   const local = [1, 2, 3].map((n) => `/products/${product.slug}/${n}.jpg`);
   const all = [product.imageUrl || null, ...local].filter(Boolean) as string[];
 
-  // unique + max 3
   const uniq = Array.from(new Set(all)).slice(0, 3);
-
-  // zawsze 3 (dobij placeholderami)
   while (uniq.length < 3) uniq.push(PLACEHOLDER);
 
   return uniq.length ? uniq : [...FALLBACK_GALLERY];
+}
+
+function errorMsg(err: unknown): string {
+  if (err instanceof ApiError) {
+    const d: any = err.details;
+    const m = d?.message;
+    if (Array.isArray(m)) return m.join(' | ');
+    if (typeof m === 'string') return m;
+    if (typeof d?.error === 'string') return d.error;
+    return err.message || `Request failed (${err.status})`;
+  }
+  if (err instanceof Error) return err.message;
+  return 'Produkt konnte nicht geladen werden';
 }
 
 const ProductPage: React.FC = () => {
@@ -48,7 +57,6 @@ const ProductPage: React.FC = () => {
   const [gallery, setGallery] = useState<string[]>([...FALLBACK_GALLERY]);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // toast
   const [toastOpen, setToastOpen] = useState(false);
 
   useEffect(() => {
@@ -58,23 +66,21 @@ const ProductPage: React.FC = () => {
       setProduct(null);
 
       try {
-        const res = await fetch(`${API_URL}/products/slug/${encodeURIComponent(slug)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
-        const normalized: Product = { ...data, price: Number(data.price) };
+        const data = await api.get<Product>(
+          `/products/slug/${encodeURIComponent(slug)}`
+        );
+        const normalized: Product = { ...data, price: Number((data as any).price) };
         setProduct(normalized);
-      } catch (e: any) {
-        setError(e?.message ?? 'Produkt konnte nicht geladen werden');
+      } catch (e) {
+        setError(errorMsg(e));
       } finally {
         setLoading(false);
       }
     };
 
-    if (slug) load();
+    if (slug) void load();
   }, [slug]);
 
-  // po załadowaniu produktu ustawiamy galerię (zawsze 3)
   useEffect(() => {
     const g = buildGallery(product);
     setGallery(g);
@@ -97,7 +103,6 @@ const ProductPage: React.FC = () => {
     dispatch(addToCart({ product, quantity: qty }));
     setToastOpen(true);
 
-    // auto-hide po 3.5s
     window.clearTimeout((window as any).__pkToastT);
     (window as any).__pkToastT = window.setTimeout(() => setToastOpen(false), 3500);
   };
@@ -105,7 +110,7 @@ const ProductPage: React.FC = () => {
   const buyNow = () => {
     if (!product) return;
     dispatch(addToCart({ product, quantity: qty }));
-    navigate('/checkout'); // dla mentora wygląda pro
+    navigate('/checkout');
   };
 
   if (loading) return <div className="card">Lade Produkt…</div>;
@@ -125,7 +130,9 @@ const ProductPage: React.FC = () => {
               <button
                 type="button"
                 className="carousel-btn left"
-                onClick={() => setActiveIndex((i) => (i - 1 + gallery.length) % gallery.length)}
+                onClick={() =>
+                  setActiveIndex((i) => (i - 1 + gallery.length) % gallery.length)
+                }
                 aria-label="Vorheriges Bild"
               >
                 ‹

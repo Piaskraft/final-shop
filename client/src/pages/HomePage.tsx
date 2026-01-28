@@ -5,10 +5,14 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState, AppDispatch } from '../store';
-import { type Product, setProducts, setLoading, setError } from '../features/productsSlice';
+import {
+  type Product,
+  setProducts,
+  setLoading,
+  setError,
+} from '../features/productsSlice';
 import { addToCart } from '../features/cartSlice';
-import { API_URL } from '../config/constants';
-
+import { api } from '../api/apiClient';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -25,10 +29,8 @@ const HomePage: React.FC = () => {
         dispatch(setLoading(true));
         dispatch(setError(null));
 
-        const res = await fetch(`${API_URL}/products`);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        const data = await res.json();
+        // ✅ api.get zwraca dane, nie { data }
+        const data = (await api.get('/products')) as Product[];
 
         const normalized: Product[] = data.map((p: any) => ({
           ...p,
@@ -37,7 +39,6 @@ const HomePage: React.FC = () => {
 
         dispatch(setProducts(normalized));
 
-        // ustaw domyślnie true tylko dla slugów, których jeszcze nie mamy
         setThumbOk((prev) => {
           const next = { ...prev };
           normalized.forEach((p) => {
@@ -52,7 +53,7 @@ const HomePage: React.FC = () => {
       }
     };
 
-    loadProducts();
+    void loadProducts();
   }, [dispatch]);
 
   if (loading) return <div className="card">Lade Produkte…</div>;
