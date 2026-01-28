@@ -9,7 +9,7 @@ Repo: https://github.com/Piaskraft/final-shop
 
 A demo e-commerce app: **React (frontend)** + **NestJS (backend)** + **Prisma (PostgreSQL)**.
 
-
+ test:   npm run lint && npm run test && npm run test:e2e && npm run test:cov
 
 ## Repo structure
 
