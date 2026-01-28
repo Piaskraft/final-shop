@@ -67,9 +67,7 @@ describe('PaymentsService', () => {
     });
 
     const StripeMock = Stripe as unknown as jest.Mock;
-    expect(StripeMock).toHaveBeenCalledWith('sk_test_123', {
-      apiVersion: '2023-10-16',
-    });
+    expect(StripeMock).toHaveBeenCalledWith('sk_test_123');
 
     expect(paymentIntentsCreateMock).toHaveBeenCalledWith({
       amount: Math.round(12.345 * 100),

@@ -7,7 +7,7 @@ export class PaymentsService {
 
   constructor() {
     const key = process.env.STRIPE_SECRET_KEY;
-    this.stripe = key ? new Stripe(key, { apiVersion: '2023-10-16' }) : null;
+    this.stripe = key ? new Stripe(key) : null;
   }
 
   async createPaymentIntent(params: {

@@ -31,12 +31,12 @@ export class MailService {
     }
 
     // 🔥 klucz: createTransport<MailInfo>()
-    this.transporter = nodemailer.createTransport<MailInfo>({
+    this.transporter = nodemailer.createTransport({
       host,
       port,
       secure: port === 465,
       auth: { user, pass },
-    });
+    } as SMTPTransport.Options);
   }
 
   async send(params: {

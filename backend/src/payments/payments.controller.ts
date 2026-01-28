@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+import { toNumber } from '../common/utils/toNumber';
 
 @Controller('payments')
 export class PaymentsController {
@@ -15,7 +16,8 @@ export class PaymentsController {
     const order = await this.ordersService.getById(dto.orderId);
 
     const intent = await this.paymentsService.createPaymentIntent({
-      amountEur: order.totalAmount,
+      amountEur: toNumber(order.totalAmount),
+
       metadata: { orderId: String(order.id) },
     });
 
