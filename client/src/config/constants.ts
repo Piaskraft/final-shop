@@ -5,7 +5,8 @@ export const API_URL = rawApiUrl.replace(/\/$/, '');
 
 export const ROUTES = {
   HOME: '/',
-  PRODUCT: (slug: string) => `/products/${slug}`,
+  PRODUCT: (slug: string) => `/product/${slug}`,
+
   CART: '/cart',
   CHECKOUT: '/checkout',
 } as const;
