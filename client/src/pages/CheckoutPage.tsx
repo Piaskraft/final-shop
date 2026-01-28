@@ -1,5 +1,4 @@
 // client/src/pages/CheckoutPage.tsx
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,18 +25,6 @@ const CheckoutPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  const readErrorMessage = async (response: Response) => {
-    const text = await response.text();
-    try {
-      const data = JSON.parse(text);
-      if (Array.isArray(data?.message)) return data.message.join(', ');
-      if (typeof data?.message === 'string') return data.message;
-      return text;
-    } catch {
-      return text;
-    }
-  };
 
   if (success) {
     return (
@@ -70,15 +57,15 @@ const CheckoutPage: React.FC = () => {
 
     try {
       const payload = {
-        name,
-        email,
-        phone: phone?.trim() ? phone.trim() : null,
-        street,
-        postalCode,
-        city,
-        notes: notes?.trim() ? notes.trim() : null,
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        street: street.trim(),
+        postalCode: postalCode.trim(),
+        city: city.trim(),
+        notes: notes.trim() || undefined,
         items: items.map((item) => ({
-          productId: Number(item.product.id),   // MUST be integer
+          productId: Number(item.product.id),
           quantity: Number(item.quantity),
         })),
       };
@@ -90,16 +77,21 @@ const CheckoutPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const msg = await readErrorMessage(response);
-        throw new Error(msg || `HTTP ${response.status}`);
+        const raw = await response.text();
+        // spróbuj ładnie wyciągnąć message[] z NestJS
+        try {
+          const j = JSON.parse(raw);
+          const msg = Array.isArray(j?.message) ? j.message.join(' | ') : raw;
+          throw new Error(msg || `HTTP ${response.status}`);
+        } catch {
+          throw new Error(raw || `HTTP ${response.status}`);
+        }
       }
 
       setSuccess(true);
       dispatch(clearCart());
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Fehler beim Absenden der Bestellung';
-      setSubmitError(message);
+    } catch (err: any) {
+      setSubmitError(err?.message || 'Fehler beim Absenden der Bestellung');
     } finally {
       setSubmitting(false);
     }
@@ -108,9 +100,7 @@ const CheckoutPage: React.FC = () => {
   return (
     <div className="card">
       <h1>Bestellung abschließen</h1>
-      <p>
-        Hier siehst du eine Zusammenfassung deiner Bestellung und kannst deine Kontaktdaten eingeben.
-      </p>
+      <p>Hier siehst du eine Zusammenfassung deiner Bestellung und kannst deine Kontaktdaten eingeben.</p>
 
       <div className="checkout-grid">
         <div className="checkout-box">
@@ -122,70 +112,37 @@ const CheckoutPage: React.FC = () => {
             <div className="form-grid">
               <label className="full">
                 Name*:
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} />
               </label>
 
               <label className="full">
                 E-Mail*:
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
               </label>
 
               <label className="full">
                 Telefon:
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </label>
 
               <label className="full">
                 Straße und Hausnummer*:
-                <input
-                  type="text"
-                  required
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                />
+                <input type="text" required value={street} onChange={(e) => setStreet(e.target.value)} />
               </label>
 
               <label>
                 Postleitzahl*:
-                <input
-                  type="text"
-                  required
-                  value={postalCode}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                />
+                <input type="text" required value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
               </label>
 
               <label>
                 Ort*:
-                <input
-                  type="text"
-                  required
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
+                <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} />
               </label>
 
               <label className="full">
                 Notiz zur Bestellung:
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                />
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
               </label>
             </div>
 
@@ -212,9 +169,7 @@ const CheckoutPage: React.FC = () => {
                   </small>
                 </div>
                 <div>
-                  <strong>
-                    {(Number(item.product.price) * item.quantity).toFixed(2)} €
-                  </strong>
+                  <strong>{(Number(item.product.price) * item.quantity).toFixed(2)} €</strong>
                 </div>
               </div>
             ))}
