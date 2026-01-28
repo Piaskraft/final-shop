@@ -57,24 +57,22 @@ const CheckoutPage: React.FC = () => {
     setSubmitError(null);
 
     try {
+      const address = `${street}, ${postalCode} ${city}`.trim();
+
+      const payload = {
+        name: customerName.trim(),
+        email: email.trim(),
+        address,
+        items: items.map((item) => ({
+          productId: Number(item.product.id),
+          quantity: Number(item.quantity),
+        })),
+      };
+
       const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName,
-          email,
-          phone: phone || null,
-          street,
-          postalCode,
-          city,
-          notes: notes || null,
-          items: items.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            unitPrice: item.product.price,
-            itemNote: item.note || null,
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -84,8 +82,9 @@ const CheckoutPage: React.FC = () => {
 
       setSuccess(true);
       dispatch(clearCart());
-    } catch (err: any) {
-      setSubmitError(err?.message || 'Fehler beim Absenden der Bestellung');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Absenden der Bestellung';
+      setSubmitError(message);
     } finally {
       setSubmitting(false);
     }
