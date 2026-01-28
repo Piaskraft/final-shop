@@ -1,20 +1,16 @@
-// backend/src/config/constants.ts
+// client/src/config/constants.ts
 
-export const PAGINATION = {
-  DEFAULT_TAKE: 10,
-  MAX_TAKE: 50,
+const raw = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+export const API_URL = raw.replace(/\/$/, '');
+
+export const ROUTES = {
+  HOME: '/',
+  PRODUCT: (slug: string) => `/product/${slug}`, 
+  CART: '/cart',
+  CHECKOUT: '/checkout',
 } as const;
 
-export const ORDER_LIMITS = {
-  DEFAULT_TAKE: 10,
-  MAX_TAKE: 50,
-} as const;
 
-export const DEFAULTS = {
-  CUSTOMER_NAME: 'Unbekannter Kunde',
-  CURRENCY: 'EUR',
-} as const;
-
-export const API = {
-  PREFIX: '', // jak nie używasz global prefix, zostaw
+export const UI = {
+  PAGE_SIZE: 12,
 } as const;
