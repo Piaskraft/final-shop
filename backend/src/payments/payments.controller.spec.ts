@@ -1,47 +1,49 @@
 import { Test } from '@nestjs/testing';
-import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
-import { OrdersService } from '../orders/orders.service';
+import { StripePaymentStrategy } from './strategies/stripe-payment.strategy';
+import { ServiceUnavailableException } from '@nestjs/common';
 
-describe('PaymentsController', () => {
-  let controller: PaymentsController;
+describe('PaymentsService', () => {
+  let service: PaymentsService;
 
-  const paymentsServiceMock = {
+  const strategyMock = {
     createPaymentIntent: jest.fn(),
-  };
-
-  const ordersServiceMock = {
-    getById: jest.fn(),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    strategyMock.createPaymentIntent.mockResolvedValue({
+      clientSecret: 'cs_test_123',
+    });
+
     const moduleRef = await Test.createTestingModule({
-      controllers: [PaymentsController],
       providers: [
-        { provide: PaymentsService, useValue: paymentsServiceMock },
-        { provide: OrdersService, useValue: ordersServiceMock },
+        PaymentsService,
+        { provide: StripePaymentStrategy, useValue: strategyMock },
       ],
     }).compile();
 
-    controller = moduleRef.get(PaymentsController);
+    service = moduleRef.get(PaymentsService);
   });
 
-  it('create(): uses order.totalAmount and returns id+clientSecret', async () => {
-    ordersServiceMock.getById.mockResolvedValue({ id: 7, totalAmount: 99.5 });
-    paymentsServiceMock.createPaymentIntent.mockResolvedValue({
-      id: 'pi_1',
-      client_secret: 'cs_1',
+  it('creates payment intent and converts EUR -> cents', async () => {
+    const result = await service.createPaymentIntent({
+      amountEur: 12.34,
+      metadata: { orderId: '1' },
     });
 
-    const result = await controller.create({ orderId: 7 });
+    expect(strategyMock.createPaymentIntent).toHaveBeenCalledWith(1234, 'eur');
+    expect(result).toEqual({ clientSecret: 'cs_test_123' });
+  });
 
-    expect(ordersServiceMock.getById).toHaveBeenCalledWith(7);
-    expect(paymentsServiceMock.createPaymentIntent).toHaveBeenCalledWith({
-      amountEur: 99.5,
-      metadata: { orderId: '7' },
-    });
-    expect(result).toEqual({ id: 'pi_1', clientSecret: 'cs_1' });
+  it('throws ServiceUnavailableException when strategy fails', async () => {
+    strategyMock.createPaymentIntent.mockRejectedValueOnce(
+      new ServiceUnavailableException('Stripe is not configured'),
+    );
+
+    await expect(service.createPaymentIntent({ amountEur: 1 })).rejects.toThrow(
+      'Stripe is not configured',
+    );
   });
 });

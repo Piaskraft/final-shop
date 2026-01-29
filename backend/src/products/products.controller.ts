@@ -43,15 +43,13 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-@Put(':id')
-replace(
-  @Param('id', ParseIntPipe) id: number,
-  @Body() dto: UpdateProductDto,
-) {
-  return this.productsService.update(id, dto);
-}
-
-
+  @Put(':id')
+  replace(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProductDto,
+  ) {
+    return this.productsService.update(id, dto);
+  }
 
   // ✅ slug przeniesiony, żeby nie kolidował z :id
   @Get('slug/:slug')

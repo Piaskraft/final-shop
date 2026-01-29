@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PaymentStrategy } from './payment.strategy';
 
@@ -13,7 +13,7 @@ export class StripePaymentStrategy implements PaymentStrategy {
 
   async createPaymentIntent(amount: number, currency: string) {
     if (!this.stripe) {
-      throw new Error('STRIPE_SECRET_KEY is missing');
+      throw new ServiceUnavailableException('Stripe is not configured');
     }
 
     const intent = await this.stripe.paymentIntents.create({

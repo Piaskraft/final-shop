@@ -23,7 +23,11 @@ describe('PaymentsService', () => {
 
   it('throws ServiceUnavailableException when strategy fails', async () => {
     const strategyMock: Pick<StripePaymentStrategy, 'createPaymentIntent'> = {
-      createPaymentIntent: jest.fn().mockRejectedValue(new Error('fail')),
+      createPaymentIntent: jest
+        .fn()
+        .mockRejectedValue(
+          new ServiceUnavailableException('Stripe is not configured'),
+        ),
     };
 
     const service = new PaymentsService(strategyMock as StripePaymentStrategy);
