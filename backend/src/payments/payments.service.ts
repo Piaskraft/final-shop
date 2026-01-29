@@ -1,32 +1,26 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import Stripe from 'stripe';
+import { StripePaymentStrategy } from './strategies/stripe-payment.strategy';
 
 @Injectable()
 export class PaymentsService {
-  private readonly stripe: Stripe | null;
-
-  constructor() {
-    const key = process.env.STRIPE_SECRET_KEY;
-    this.stripe = key ? new Stripe(key) : null;
-  }
+  constructor(private readonly strategy: StripePaymentStrategy) {}
 
   async createPaymentIntent(params: {
     amountEur: number;
     metadata?: Record<string, string>;
   }) {
-    if (!this.stripe) {
-      throw new ServiceUnavailableException('Stripe is not configured');
-    }
-
     const amount = Math.round(params.amountEur * 100);
 
-    const intent = await this.stripe.paymentIntents.create({
-      amount,
-      currency: 'eur',
-      automatic_payment_methods: { enabled: true },
-      metadata: params.metadata,
-    });
+    try {
+      // Strategy zwraca { clientSecret }
+      const result = await this.strategy.createPaymentIntent(amount, 'eur');
 
-    return intent;
+      // Jeśli Twój controller oczekuje "intent", to zwracamy kompatybilny format:
+      return {
+        clientSecret: result.clientSecret,
+      };
+    } catch {
+      throw new ServiceUnavailableException('Stripe is not configured');
+    }
   }
 }
