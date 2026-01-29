@@ -1,7 +1,9 @@
-// client/src/config/constants.ts
 
-const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+// client/src/config/constants.ts
+const rawApiUrl = process.env.REACT_APP_API_URL || '';
 export const API_URL = rawApiUrl.replace(/\/$/, '');
+
 
 export const ROUTES = {
   HOME: '/',

@@ -210,7 +210,7 @@ const ProductPage: React.FC = () => {
 
       {toastOpen && (
         <div className="toast" role="status" aria-live="polite">
-          <div className="toast-title">Zum Warenkorb hinzugefügt ✓</div>
+          <div className="toast-title">In den Warenkorb ✓</div>
           <div className="toast-actions">
             <button type="button" onClick={() => navigate('/checkout')}>
               Zur Kasse

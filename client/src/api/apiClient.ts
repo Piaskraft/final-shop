@@ -20,7 +20,9 @@ async function request<T>(
   body?: unknown,
   headers?: Record<string, string>,
 ): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const API_PREFIX = '/api';
+
+  const res = await fetch(`${API_URL}${API_PREFIX}${path}`, {
     method,
     headers: {
       ...(body ? { 'Content-Type': 'application/json' } : {}),
@@ -35,9 +37,7 @@ async function request<T>(
   const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
 
   if (!res.ok) {
-    const msg =
-      (isJson && (data?.message || data?.error)) ||
-      `Request failed (${res.status})`;
+    const msg = (isJson && (data?.message || data?.error)) || `Request failed (${res.status})`;
     throw new ApiError(String(msg), res.status, data);
   }
 
