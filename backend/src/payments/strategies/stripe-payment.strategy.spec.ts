@@ -2,7 +2,9 @@ import { StripePaymentStrategy } from './stripe-payment.strategy';
 import Stripe from 'stripe';
 
 jest.mock('stripe', () => {
-  const createMock = jest.fn().mockResolvedValue({ client_secret: 'cs_test_123' });
+  const createMock = jest
+    .fn()
+    .mockResolvedValue({ client_secret: 'cs_test_123' });
 
   const StripeMock = jest.fn().mockImplementation(() => ({
     paymentIntents: {
@@ -27,7 +29,10 @@ describe('StripePaymentStrategy', () => {
     expect(result).toEqual({ clientSecret: 'cs_test_123' });
 
     const StripeCtor = Stripe as unknown as jest.Mock;
-    const stripeInstance = StripeCtor.mock.results[0].value;
+
+    const stripeInstance = StripeCtor.mock.results[0].value as unknown as {
+      paymentIntents: { create: jest.Mock };
+    };
 
     expect(stripeInstance.paymentIntents.create).toHaveBeenCalledWith({
       amount: 1000,

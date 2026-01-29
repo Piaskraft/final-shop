@@ -4,17 +4,18 @@ import { PaymentStrategy } from './payment.strategy';
 
 @Injectable()
 export class StripePaymentStrategy implements PaymentStrategy {
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
 
   constructor() {
     const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) {
-      throw new Error('STRIPE_SECRET_KEY is missing');
-    }
-    this.stripe = new Stripe(key);
+    this.stripe = key ? new Stripe(key) : null;
   }
 
   async createPaymentIntent(amount: number, currency: string) {
+    if (!this.stripe) {
+      throw new Error('STRIPE_SECRET_KEY is missing');
+    }
+
     const intent = await this.stripe.paymentIntents.create({
       amount,
       currency,

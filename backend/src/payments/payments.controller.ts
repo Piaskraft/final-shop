@@ -15,12 +15,14 @@ export class PaymentsController {
   async create(@Body() dto: CreatePaymentIntentDto) {
     const order = await this.ordersService.getById(dto.orderId);
 
-    const intent = await this.paymentsService.createPaymentIntent({
+    const { clientSecret } = await this.paymentsService.createPaymentIntent({
       amountEur: toNumber(order.totalAmount),
-
       metadata: { orderId: String(order.id) },
     });
 
-    return { id: intent.id, clientSecret: intent.client_secret };
+    return {
+      orderId: order.id,
+      clientSecret,
+    };
   }
 }

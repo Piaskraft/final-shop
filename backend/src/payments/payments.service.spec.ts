@@ -1,13 +1,16 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { StripePaymentStrategy } from './strategies/stripe-payment.strategy';
 
 describe('PaymentsService', () => {
   it('creates payment intent and converts EUR -> cents', async () => {
-    const strategyMock = {
-      createPaymentIntent: jest.fn().mockResolvedValue({ clientSecret: 'cs_test_123' }),
+    const strategyMock: Pick<StripePaymentStrategy, 'createPaymentIntent'> = {
+      createPaymentIntent: jest
+        .fn()
+        .mockResolvedValue({ clientSecret: 'cs_test_123' }),
     };
 
-    const service = new PaymentsService(strategyMock as any);
+    const service = new PaymentsService(strategyMock as StripePaymentStrategy);
 
     const result = await service.createPaymentIntent({
       amountEur: 12.34,
@@ -19,14 +22,14 @@ describe('PaymentsService', () => {
   });
 
   it('throws ServiceUnavailableException when strategy fails', async () => {
-    const strategyMock = {
+    const strategyMock: Pick<StripePaymentStrategy, 'createPaymentIntent'> = {
       createPaymentIntent: jest.fn().mockRejectedValue(new Error('fail')),
     };
 
-    const service = new PaymentsService(strategyMock as any);
+    const service = new PaymentsService(strategyMock as StripePaymentStrategy);
 
-    await expect(service.createPaymentIntent({ amountEur: 1 })).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    await expect(
+      service.createPaymentIntent({ amountEur: 1 }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });
