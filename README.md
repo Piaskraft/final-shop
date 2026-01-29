@@ -61,6 +61,11 @@ Base URL (prod): https://final-shop-qoz3.onrender.com
 - SMTP_PASS=
 - SMTP_FROM=
 - CRON_ENABLED=true
+## Design patterns
+
+- **Repository pattern**: `OrdersRepository` + `PrismaOrdersRepository` (separacja logiki dostępu do DB od serwisu).
+- **Strategy pattern**: `PaymentStrategy` + `StripePaymentStrategy` używane przez `PaymentsService` (łatwa podmiana sposobu płatności).
+
 
 ### Tests
 ```bash
@@ -72,8 +77,7 @@ npm run test:cov
 
 
 
-TEST :
-cd backend && npm run lint && npm run test && npm run test:e2e && npm run test:cov
+
 
 ## Repo structure
 
