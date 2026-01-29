@@ -5,8 +5,8 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-import { ProductsModule } from './products/products.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { UsersModule } from './users/users.module';
@@ -19,6 +19,7 @@ import { JobsModule } from './jobs/jobs.module';
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client', 'build'),
+      exclude: ['/api{/*path}'],
     }),
     PrismaModule,
     ProductsModule,
