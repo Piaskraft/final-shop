@@ -9,7 +9,71 @@ Repo: https://github.com/Piaskraft/final-shop
 
 A demo e-commerce app: **React (frontend)** + **NestJS (backend)** + **Prisma (PostgreSQL)**.
 
- test:   npm run lint && npm run test && npm run test:e2e && npm run test:cov
+## Backend (NestJS) — API
+
+Base URL (local): http://localhost:3001  
+Base URL (prod): https://final-shop-qoz3.onrender.com
+
+### Endpoints (min. 15)
+
+**Products**
+- GET    /products
+- GET    /products/:id
+- GET    /products/slug/:slug
+- POST   /products
+- PATCH  /products/:id
+- DELETE /products/:id
+
+**Orders**
+- GET    /orders
+- GET    /orders/id/:id
+- POST   /orders
+- PATCH  /orders/id/:id
+- DELETE /orders/id/:id
+
+**Categories**
+- GET    /categories
+- GET    /categories/:id
+- GET    /categories/slug/:slug
+- POST   /categories
+- PATCH  /categories/:id
+- DELETE /categories/:id
+
+**Users**
+- GET    /users
+- GET    /users/:id
+- POST   /users
+- PATCH  /users/:id
+- DELETE /users/:id
+
+**Payments (Stripe)**
+- POST   /payments/payment-intent
+
+**Mail (SMTP)**
+- POST   /mail/test
+
+### ENV (backend)
+- DATABASE_URL=
+- PORT=3001
+- STRIPE_SECRET_KEY=
+- SMTP_HOST=
+- SMTP_USER=
+- SMTP_PASS=
+- SMTP_FROM=
+- CRON_ENABLED=true
+
+### Tests
+```bash
+cd backend
+npm run lint
+npm run test
+npm run test:e2e
+npm run test:cov
+
+
+
+TEST :
+cd backend && npm run lint && npm run test && npm run test:e2e && npm run test:cov
 
 ## Repo structure
 
