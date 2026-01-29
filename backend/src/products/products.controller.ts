@@ -12,7 +12,7 @@ import {
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-
+import { Put } from '@nestjs/common';
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
@@ -42,6 +42,16 @@ export class ProductsController {
   findAll() {
     return this.productsService.findAll();
   }
+
+@Put(':id')
+replace(
+  @Param('id', ParseIntPipe) id: number,
+  @Body() dto: UpdateProductDto,
+) {
+  return this.productsService.update(id, dto);
+}
+
+
 
   // ✅ slug przeniesiony, żeby nie kolidował z :id
   @Get('slug/:slug')
