@@ -1,38 +1,52 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Query,
+  Res,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { ExternalService } from './external.service';
 
 @Controller('external')
 export class ExternalController {
   constructor(private readonly external: ExternalService) {}
 
-  // front woła /api/external/rate?base=EUR&target=PLN
-  @Get('rate')
-  getRate(
+  // /api/external/rate?base=EUR&target=PLN
+  // + alias /rates żeby nie było 404 jak ktoś używa starego URL
+  @Get(['rate', 'rates'])
+  async getRate(
+    @Res({ passthrough: true }) res: Response,
     @Query('base') base = 'EUR',
     @Query('target') target = 'PLN',
   ) {
-    return this.external.getExchangeRate(base, target);
+    const { data, cacheHit } = await this.external.getExchangeRate(base, target);
+    res.setHeader('X-Cache', cacheHit ? 'HIT' : 'MISS');
+    return data;
   }
 
-  // alias (jakbyś kiedyś wołał /rates)
-  @Get('rates')
-  getRates(
-    @Query('base') base = 'EUR',
-    @Query('target') target = 'PLN',
-  ) {
-    return this.external.getExchangeRate(base, target);
-  }
-
-  // front woła /api/external/weather?lat=...&lon=...
+  // /api/external/weather?lat=51.4556&lon=7.0116&city=Essen
   @Get('weather')
-  getWeather(
-    @Query('city') city = 'Essen',
-    @Query('lat') lat?: string,
-    @Query('lon') lon?: string,
+  async getWeather(
+    @Res({ passthrough: true }) res: Response,
+    @Query('lat') latRaw: string,
+    @Query('lon') lonRaw: string,
+    @Query('city') city?: string,
   ) {
-    if (lat && lon) {
-      return this.external.getWeatherByCoords(Number(lat), Number(lon));
+    const lat = Number(latRaw);
+    const lon = Number(lonRaw);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      throw new BadRequestException('lat/lon are required numbers');
     }
-    return this.external.getWeather(city);
+
+    const { data, cacheHit } = await this.external.getWeather(
+      lat,
+      lon,
+      city ?? null,
+    );
+
+    res.setHeader('X-Cache', cacheHit ? 'HIT' : 'MISS');
+    return data;
   }
 }

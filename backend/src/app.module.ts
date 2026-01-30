@@ -16,8 +16,10 @@ import { JobsModule } from './jobs/jobs.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ExternalModule } from './external/external.module';
 
+
 @Module({
   imports: [
+    
      CacheModule.register({ isGlobal: true }),
     ScheduleModule.forRoot(),
     ExternalModule,
@@ -34,7 +36,7 @@ import { ExternalModule } from './external/external.module';
   isGlobal: true,
   ttl: 60, 
 }),
-ExternalModule,
+
   ],
   controllers: [AppController],
   providers: [AppService],

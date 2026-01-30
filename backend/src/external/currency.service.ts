@@ -1,50 +1,38 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { Injectable, BadGatewayException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
-type FrankfurterResponse = {
-  amount: number;
+export type ExchangeRateDto = {
+  provider: 'frankfurter.app';
   base: string;
+  target: string;
+  rate: number;
   date: string;
-  rates: Record<string, number>;
 };
 
 @Injectable()
 export class CurrencyService {
   constructor(private readonly http: HttpService) {}
 
-  async getRate(base: string, target: string) {
-    const from = String(base || 'EUR').toUpperCase();
-    const to = String(target || 'PLN').toUpperCase();
+  async getRate(base = 'EUR', target = 'PLN'): Promise<ExchangeRateDto> {
+    const from = (base || 'EUR').toUpperCase();
+    const to = (target || 'PLN').toUpperCase();
 
-    if (from === to) {
-      return {
-        provider: 'frankfurter.app',
-        base: from,
-        target: to,
-        rate: 1,
-        date: new Date().toISOString().slice(0, 10),
-      };
-    }
+    const url =
+      `https://api.frankfurter.app/latest?from=${encodeURIComponent(from)}` +
+      `&to=${encodeURIComponent(to)}`;
 
     try {
       const { data } = await firstValueFrom(
-        this.http.get<FrankfurterResponse>('https://api.frankfurter.app/latest', {
-          params: { from, to },
-          timeout: 8000,
-        }),
+        this.http.get(url, { timeout: 8000 }),
       );
 
-      const rate = data?.rates?.[to];
-      if (typeof rate !== 'number') throw new Error('Rate missing');
+      const rate = Number(data?.rates?.[to]);
+      const date = String(data?.date ?? '');
 
-      return {
-        provider: 'frankfurter.app',
-        base: from,
-        target: to,
-        rate,
-        date: data?.date ?? null,
-      };
+      if (!Number.isFinite(rate) || !date) throw new Error('Invalid response');
+
+      return { provider: 'frankfurter.app', base: from, target: to, rate, date };
     } catch {
       throw new BadGatewayException('External currency API error');
     }
