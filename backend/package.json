@@ -20,17 +20,18 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "prisma db seed",
     "db:up": "docker compose up -d",
-"db:down": "docker compose down -v",
-"db:migrate": "prisma migrate deploy",
-"db:generate": "prisma generate",
-"db:prepare": "npm run db:up && npm run db:generate && npm run db:migrate && npm run seed",
-"start:dev:ready": "npm run db:prepare && npm run start:dev"
-
+    "db:down": "docker compose down -v",
+    "db:migrate": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:prepare": "npm run db:up && npm run db:generate && npm run db:migrate && npm run seed",
+    "start:dev:ready": "npm run db:prepare && npm run start:dev"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@nestjs/axios": "^4.0.1",
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/mapped-types": "^2.1.0",
@@ -38,12 +39,13 @@
     "@nestjs/schedule": "^6.1.0",
     "@nestjs/serve-static": "^5.0.4",
     "@prisma/client": "^5.16.2",
+    "cache-manager": "^7.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cron": "^4.4.0",
     "nodemailer": "^7.0.13",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
+    "rxjs": "^7.8.2",
     "stripe": "^20.2.0"
   },
   "devDependencies": {

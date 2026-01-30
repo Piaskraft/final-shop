@@ -160,12 +160,21 @@ label{ color: var(--muted); font-size: 14px; }
 ul{ padding-left: 18px; }
 li{ margin: 8px 0; }
 
-/* Products grid (we’ll use in next step; harmless now) */
+/* Products grid + widgets */
 .card-list{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+  align-items: stretch; /* równe wysokości kart */
 }
+
+/* opcjonalnie: wyrównaj wnętrze kart */
+.card-list > .card{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 
 @media (max-width: 520px){
   .app-header{ padding: 12px 14px; }

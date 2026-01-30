@@ -3,7 +3,7 @@ import { API_URL } from '../config/constants';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
   details?: unknown;
 
@@ -86,4 +86,37 @@ export const api = {
   del: <T>(path: string) => request<T>(path, 'DELETE'),
 };
 
-export { ApiError };
+/* =========================
+   External API (backend proxy)
+   ========================= */
+
+export type RateResponse = {
+  provider: string;
+  base: string;
+  target: string;
+  rate: number;
+  date: string | null;
+};
+
+export type WeatherResponse = {
+  provider: string;
+  lat: number;
+  lon: number;
+  temperature: number;
+  windspeed: number;
+  weathercode: number;
+  time: string;
+};
+
+export function getRate(base = 'EUR', target = 'PLN') {
+  const qs = new URLSearchParams({ base, target });
+  return api.get<RateResponse>(`/external/rate?${qs.toString()}`);
+}
+
+export function getWeather(lat = 52.52, lon = 13.41) {
+  const qs = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+  });
+  return api.get<WeatherResponse>(`/external/weather?${qs.toString()}`);
+}

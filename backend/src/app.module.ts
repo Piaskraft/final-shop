@@ -13,10 +13,14 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PaymentsModule } from './payments/payments.module';
 import { MailModule } from './mail/mail.module';
 import { JobsModule } from './jobs/jobs.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ExternalModule } from './external/external.module';
 
 @Module({
   imports: [
-    
+     CacheModule.register({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    ExternalModule,
     PrismaModule,
     ProductsModule,
     OrdersModule,
@@ -26,6 +30,11 @@ import { JobsModule } from './jobs/jobs.module';
     PaymentsModule,
     MailModule,
     JobsModule,
+    CacheModule.register({
+  isGlobal: true,
+  ttl: 60, 
+}),
+ExternalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
