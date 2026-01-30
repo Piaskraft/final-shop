@@ -18,7 +18,14 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "db:up": "docker compose up -d",
+"db:down": "docker compose down -v",
+"db:migrate": "prisma migrate deploy",
+"db:generate": "prisma generate",
+"db:prepare": "npm run db:up && npm run db:generate && npm run db:migrate && npm run seed",
+"start:dev:ready": "npm run db:prepare && npm run start:dev"
+
   },
   "prisma": {
     "seed": "node prisma/seed.js"

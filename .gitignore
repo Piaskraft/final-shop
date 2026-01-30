@@ -4,3 +4,7 @@ build/
 .env
 # CRA build
 client/build/
+
+backend/node_modules/
+client/node_modules/
+backend/dist/
