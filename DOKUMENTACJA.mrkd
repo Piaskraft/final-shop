@@ -1,53 +1,360 @@
+````md
 # Dokumentacja – Final Shop (Piaskraft Mini)
 
 ## 1) Cel projektu
-Final Shop (Piaskraft Mini) to prosta aplikacja typu sklep internetowy:
+Final Shop (Piaskraft Mini) to demo aplikacji typu sklep internetowy (e-commerce), które:
 - wyświetla listę produktów,
-- pozwala wejść w szczegóły produktu,
+- pozwala wejść w szczegóły produktu (również po `slug`),
 - umożliwia dodanie produktu do koszyka,
 - umożliwia złożenie zamówienia (checkout),
 - zapisuje zamówienie w bazie danych (backend + Prisma).
 
-## 2) Jak uruchomić lokalnie (krok po kroku)
+Projekt jest zbudowany jako **monorepo**:
+- `backend/` – NestJS API + Prisma
+- `client/` – React UI
+
+Backend posiada globalny prefix: **`/api`**.
+
+---
+
+## 2) Uruchomienie lokalne (krok po kroku)
 
 ### Wymagania
 - Node.js (zalecane 18+)
 - npm
+- Docker (zalecane, do uruchomienia PostgreSQL lokalnie)
 
-### Backend (NestJS)
-1. Przejdź do folderu backend:
-   - `cd backend`
-2. Zainstaluj zależności:
-   - `npm install`
-3. Ustaw zmienne środowiskowe w pliku `.env`:
-   - `DATABASE_URL=...`
-4. Uruchom backend:
-   - `npm run start:dev`
-Backend domyślnie działa na porcie `3001`.
+---
 
-### Frontend (React)
-1. Przejdź do folderu client:
-   - `cd client`
-2. Zainstaluj zależności:
-   - `npm install`
-3. (Opcjonalnie) ustaw zmienną:
-   - `REACT_APP_API_URL=http://localhost:3001`
-4. Uruchom frontend:
-   - `npm start`
-Frontend domyślnie działa na porcie `3000`.
+### 2.1. Baza danych (PostgreSQL przez Docker) – uruchom z root repo
+W repo znajduje się `docker-compose.yml` w katalogu głównym.
 
-## 3) Dodatkowe informacje techniczne (API / autoryzacja / konfiguracja)
+Uruchom bazę:
+```bash
+# uruchom w: final-shop/
+docker compose up -d
+````
 
-### Baza danych
-Projekt używa Prisma + baza PostgreSQL (np. Render/FreeDB).
-Dostęp jest realizowany przez `DATABASE_URL` w backend/.env.
+Zatrzymanie bazy:
 
-### Komunikacja front ↔ backend
-Frontend pobiera adres API z:
-- zmiennej `REACT_APP_API_URL` (Render / lokalnie),
-- lub fallbacku ustawionego w kodzie.
+```bash
+docker compose down
+```
 
-### Render
-- Front działa jako **Static Site**.
-- Backend działa jako **Web Service**.
-- Na darmowym planie backend może “usypiać” po bezczynności i pierwsze żądanie może być wolniejsze.
+---
+
+### 2.2. Backend (NestJS + Prisma)
+
+1. Przejdź do folderu backend i zainstaluj zależności:
+
+```bash
+cd backend
+npm ci
+```
+
+2. Skopiuj plik środowiskowy:
+
+```bash
+cp .env.example .env
+```
+
+3. Wygeneruj klienta Prisma, uruchom migracje i seed:
+
+```bash
+npm run db:generate
+npx prisma migrate dev
+npm run seed
+```
+
+4. Uruchom API:
+
+```bash
+npm run start:dev
+```
+
+Backend działa domyślnie pod:
+
+* `http://localhost:3001/api`
+
+Przykład:
+
+* `GET http://localhost:3001/api/products`
+
+> Uwaga: jeśli nie korzystasz z Dockera, musisz zapewnić własną bazę PostgreSQL i poprawnie ustawić `DATABASE_URL` w `backend/.env`.
+
+---
+
+### 2.3. Frontend (React)
+
+1. Przejdź do folderu client i zainstaluj zależności:
+
+```bash
+cd ../client
+npm ci
+```
+
+2. Uruchom frontend:
+
+```bash
+npm start
+```
+
+Frontend działa domyślnie pod:
+
+* `http://localhost:3000`
+
+#### Jak frontend łączy się z API?
+
+* Domyślnie frontend używa ścieżki względnej **`/api`** (lokalnie działa dzięki proxy CRA do `http://localhost:3001`).
+* Opcjonalnie możesz wskazać zdalny backend przez `REACT_APP_API_URL`.
+
+Jeśli chcesz wskazać backend ręcznie, utwórz `client/.env`:
+
+```env
+REACT_APP_API_URL=http://localhost:3001
+```
+
+Frontend zbuduje endpointy jako:
+
+* `${REACT_APP_API_URL}/api`
+  oraz ma zabezpieczenie, żeby nie tworzyć `/api/api`.
+
+---
+
+## 3) Informacje techniczne (API / konfiguracja / integracje)
+
+### 3.1. Baza danych i Prisma
+
+Projekt używa Prisma ORM oraz PostgreSQL.
+Połączenie realizowane jest przez:
+
+* `DATABASE_URL` w `backend/.env`
+
+Przykładowy format:
+
+```env
+DATABASE_URL="postgresql://finalshop:finalshop@localhost:5432/finalshop?schema=public"
+```
+
+---
+
+### 3.2. Najważniejsze endpointy (prefix `/api`)
+
+* Produkty:
+
+  * `GET /api/products`
+  * `GET /api/products/:id`
+  * `GET /api/products/slug/:slug`
+* Zamówienia:
+
+  * `POST /api/orders`
+  * `GET /api/orders`
+* Dane zewnętrzne (cache + nagłówek `X-Cache`):
+
+  * `GET /api/external/rate?base=EUR&target=PLN`
+  * `GET /api/external/weather?lat=...&lon=...&city=...`
+* Płatność (Stripe):
+
+  * `POST /api/payments/payment-intent`
+* Mail (SMTP):
+
+  * `POST /api/mail/test`
+
+---
+
+### 3.3. Integracje (Stripe / SMTP)
+
+Integracje są opcjonalne i zależą od zmiennych środowiskowych.
+
+#### Stripe
+
+Wymaga:
+
+```env
+STRIPE_SECRET_KEY="sk_test_..."
+```
+
+Endpoint:
+
+* `POST /api/payments/payment-intent`
+
+Jeśli brakuje konfiguracji, endpoint płatności zwraca **503** (Stripe not configured).
+
+---
+
+#### SMTP (Nodemailer)
+
+Wymaga:
+
+```env
+SMTP_HOST="smtp.example.com"
+SMTP_PORT=587
+SMTP_USER="user@example.com"
+SMTP_PASS="password"
+SMTP_FROM="no-reply@example.com"
+```
+
+Endpoint:
+
+* `POST /api/mail/test`
+
+Jeśli brakuje konfiguracji, endpoint maila zwraca **503** (Email not configured).
+
+---
+
+### 3.4. External data + cache
+
+Backend posiada endpointy do zewnętrznych danych i cache’uje odpowiedzi (TTL ok. 10 minut).
+Nagłówek odpowiedzi: `X-Cache: HIT|MISS`.
+
+Endpointy:
+
+* `GET /api/external/rate?base=EUR&target=PLN`
+* `GET /api/external/rates?base=EUR&target=PLN` (alias)
+* `GET /api/external/weather?lat=52.52&lon=13.41&city=Berlin`
+
+---
+
+### 3.5. Scheduler (Cron jobs)
+
+Aplikacja zawiera zadania harmonogramu (`@nestjs/schedule`):
+
+1. **OrdersCleanupJob**
+
+* uruchamiany codziennie o **03:00**
+* aktywny tylko jeśli:
+
+```env
+CRON_ENABLED=true
+```
+
+2. **ExternalJobs.warmCache**
+
+* uruchamiany co **10 minut**
+* podgrzewa cache dla kursów walut i pogody (domyślnie Essen)
+
+---
+
+### 3.6. Walidacja i obsługa błędów
+
+Backend ma globalny `ValidationPipe`:
+
+* `whitelist: true`
+* `forbidNonWhitelisted: true`
+* `transform: true` (+ implicit conversion)
+
+Walidacja odbywa się przez DTO i `class-validator`.
+Obsługa błędów używa standardowych wyjątków NestJS (np. 400/404/503).
+
+---
+
+## 4) Budowanie i uruchomienie “jeden serwer” (backend serwuje frontend)
+
+Backend potrafi serwować build Reacta z katalogu `backend/public`.
+
+1. Zbuduj wszystko i skopiuj build frontu do backendu:
+
+```bash
+cd backend
+npm ci
+npm run build:full
+```
+
+2. Uruchom produkcyjnie:
+
+```bash
+npm run start:prod
+```
+
+---
+
+## 5) Testy i jakość
+
+### Backend
+
+```bash
+cd backend
+npm run lint
+npm run test
+npm run test:e2e
+npm run test:cov
+```
+
+Coverage zapisuje się w:
+
+* `backend/coverage/`
+
+### Frontend
+
+```bash
+cd client
+npm run build
+```
+
+---
+
+## 6) Deploy (Render)
+
+* Front (Static Site):
+  [https://final-shop-1.onrender.com](https://final-shop-1.onrender.com)
+* Backend (Web Service):
+  [https://final-shop-qoz3.onrender.com/api](https://final-shop-qoz3.onrender.com/api)
+
+Uwaga: na darmowym planie Render backend może “usypiać” po bezczynności — pierwsze żądanie po przerwie może być wolniejsze.
+
+---
+
+## 7) Instrukcja dla oceniającego (szybka weryfikacja)
+
+### 7.1. Frontend (UI)
+
+Wejdź:
+
+* [https://final-shop-1.onrender.com](https://final-shop-1.onrender.com)
+
+Sprawdź:
+
+1. Lista produktów (Home)
+2. Wejście w szczegóły produktu
+3. Dodanie produktu do koszyka
+4. Przejście do checkout i złożenie zamówienia
+
+---
+
+### 7.2. Backend (API działa, prefix `/api`)
+
+Przykładowe endpointy:
+
+* `GET https://final-shop-qoz3.onrender.com/api/products`
+* `GET https://final-shop-qoz3.onrender.com/api/products/1`
+* `GET https://final-shop-qoz3.onrender.com/api/orders`
+
+---
+
+### 7.3. Zewnętrzne źródła danych + cache (nagłówek `X-Cache: HIT|MISS`)
+
+* `GET https://final-shop-qoz3.onrender.com/api/external/rate?base=EUR&target=PLN`
+* `GET https://final-shop-qoz3.onrender.com/api/external/weather?lat=52.52&lon=13.41&city=Berlin`
+
+---
+
+### 7.4. Metody HTTP / CRUD (przykład)
+
+* Products: `PATCH /api/products/:id`, `DELETE /api/products/:id`
+* Orders: `PATCH /api/orders/id/:id`, `DELETE /api/orders/id/:id`
+
+---
+
+### 7.5. Testy + coverage
+
+Lokalnie w `backend/`:
+
+```bash
+npm run test:cov
+```
+
+Projekt zawiera testy unit + e2e oraz spełnia wymagania coverage (≥ 65%).
+
+```
+::contentReference[oaicite:0]{index=0}
+```
