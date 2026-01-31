@@ -6,13 +6,19 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('UsersService', () => {
   let service: UsersService;
 
-  const findManyMock = jest.fn();
   const findUniqueMock = jest.fn();
+  const findManyMock = jest.fn();
+  const createMock = jest.fn();
+  const updateMock = jest.fn();
+  const deleteMock = jest.fn();
 
   const prismaMock = {
     user: {
-      findMany: findManyMock,
       findUnique: findUniqueMock,
+      findMany: findManyMock,
+      create: createMock,
+      update: updateMock,
+      delete: deleteMock,
     },
   } as unknown as PrismaService;
 
@@ -34,7 +40,10 @@ describe('UsersService', () => {
 
     const result = await service.findAll();
     expect(result).toHaveLength(2);
-    expect(findManyMock).toHaveBeenCalledTimes(1);
+
+    expect(findManyMock).toHaveBeenCalledWith({
+      orderBy: { id: 'desc' },
+    });
   });
 
   it('getById(): throws NotFoundException when user not found', async () => {
@@ -43,5 +52,50 @@ describe('UsersService', () => {
     await expect(service.getById(999)).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('getById(): returns user when found', async () => {
+    findUniqueMock.mockResolvedValue({ id: 1, email: 'a@a.com' });
+
+    const result = await service.getById(1);
+
+    expect(result).toMatchObject({ id: 1 });
+    expect(findUniqueMock).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
+  });
+
+  it('create(): creates user', async () => {
+    createMock.mockResolvedValue({ id: 1 });
+
+    await service.create({
+      email: 'a@a.com',
+      name: 'A',
+    } as any);
+
+    expect(createMock).toHaveBeenCalledWith({
+      data: { email: 'a@a.com', name: 'A' },
+    });
+  });
+
+  it('update(): updates user', async () => {
+    updateMock.mockResolvedValue({ id: 1 });
+
+    await service.update(1, { name: 'B' } as any);
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { name: 'B' },
+    });
+  });
+
+  it('remove(): deletes user', async () => {
+    deleteMock.mockResolvedValue({ id: 1 });
+
+    await service.remove(1);
+
+    expect(deleteMock).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
   });
 });
