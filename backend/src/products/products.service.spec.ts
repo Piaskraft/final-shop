@@ -2,6 +2,8 @@ import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -94,13 +96,16 @@ describe('ProductsService', () => {
   it('create(): maps dto and uses description fallback', async () => {
     createMock.mockResolvedValue({ id: 1 });
 
-    await service.create({
+    const dto: CreateProductDto = {
       name: 'A',
       slug: 'a',
       price: 10,
-      description: null,
+      // DTO ma description?: string, więc testujemy fallback przez undefined (też odpala ?? '')
+      description: undefined,
       mainImage: 'img',
-    } as any);
+    };
+
+    await service.create(dto);
 
     expect(createMock).toHaveBeenCalledWith({
       data: {
@@ -117,7 +122,9 @@ describe('ProductsService', () => {
   it('update(): sends only provided fields', async () => {
     updateMock.mockResolvedValue({ id: 1 });
 
-    await service.update(1, { name: 'B' } as any);
+    const dto: UpdateProductDto = { name: 'B' };
+
+    await service.update(1, dto);
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: 1 },

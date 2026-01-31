@@ -60,7 +60,7 @@ async function bootstrap() {
 
   // SPA fallback: React Router refresh fix (/cart, /checkout, itp.)
   // Działa tylko jeśli istnieje backend/public/index.html (czyli po build+copy Reacta).
- const publicDir = join(__dirname, '..', 'public');
+  const publicDir = join(__dirname, '..', 'public');
 
   const hasIndex = existsSync(join(publicDir, 'index.html'));
 

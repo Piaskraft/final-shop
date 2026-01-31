@@ -24,12 +24,25 @@ describe('ExternalJobs', () => {
   });
 
   it('warmCache(): calls getExchangeRate and getWeather with defaults', async () => {
-    externalServiceMock.getExchangeRate.mockResolvedValue({ data: {}, cacheHit: false });
-    externalServiceMock.getWeather.mockResolvedValue({ data: {}, cacheHit: false });
+    externalServiceMock.getExchangeRate.mockResolvedValue({
+      data: {},
+      cacheHit: false,
+    });
+    externalServiceMock.getWeather.mockResolvedValue({
+      data: {},
+      cacheHit: false,
+    });
 
     await jobs.warmCache();
 
-    expect(externalServiceMock.getExchangeRate).toHaveBeenCalledWith('EUR', 'PLN');
-    expect(externalServiceMock.getWeather).toHaveBeenCalledWith(51.4556, 7.0116, 'Essen');
+    expect(externalServiceMock.getExchangeRate).toHaveBeenCalledWith(
+      'EUR',
+      'PLN',
+    );
+    expect(externalServiceMock.getWeather).toHaveBeenCalledWith(
+      51.4556,
+      7.0116,
+      'Essen',
+    );
   });
 });

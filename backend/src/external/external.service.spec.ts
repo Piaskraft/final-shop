@@ -71,11 +71,7 @@ describe('ExternalService', () => {
 
     expect(result).toEqual({ data: RATE, cacheHit: false });
     expect(currencyMock.getRate).toHaveBeenCalledWith('EUR', 'PLN');
-    expect(cacheMock.set).toHaveBeenCalledWith(
-      'rate:EUR:PLN',
-      RATE,
-      600,
-    );
+    expect(cacheMock.set).toHaveBeenCalledWith('rate:EUR:PLN', RATE, 600);
   });
 
   it('getWeather(): returns cached value when present', async () => {
@@ -94,7 +90,11 @@ describe('ExternalService', () => {
     const result = await service.getWeather(52.52, 13.41, 'Berlin');
 
     expect(result).toEqual({ data: WEATHER, cacheHit: false });
-    expect(weatherMock.getCurrentByCoords).toHaveBeenCalledWith(52.52, 13.41, 'Berlin');
+    expect(weatherMock.getCurrentByCoords).toHaveBeenCalledWith(
+      52.52,
+      13.41,
+      'Berlin',
+    );
 
     expect(cacheMock.set).toHaveBeenCalledWith(
       'weather:52.5200:13.4100',

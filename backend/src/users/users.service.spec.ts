@@ -2,6 +2,8 @@ import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -68,10 +70,12 @@ describe('UsersService', () => {
   it('create(): creates user', async () => {
     createMock.mockResolvedValue({ id: 1 });
 
-    await service.create({
+    const dto: CreateUserDto = {
       email: 'a@a.com',
       name: 'A',
-    } as any);
+    };
+
+    await service.create(dto);
 
     expect(createMock).toHaveBeenCalledWith({
       data: { email: 'a@a.com', name: 'A' },
@@ -81,7 +85,9 @@ describe('UsersService', () => {
   it('update(): updates user', async () => {
     updateMock.mockResolvedValue({ id: 1 });
 
-    await service.update(1, { name: 'B' } as any);
+    const dto: UpdateUserDto = { name: 'B' };
+
+    await service.update(1, dto);
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: 1 },
