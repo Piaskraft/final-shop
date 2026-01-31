@@ -3,46 +3,45 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Put } from '@nestjs/common';
+
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  // ✅ pod e2e: /products/123 -> ParseIntPipe działa, /products/abc -> 400
-  @Get(':id')
-  getById(@Param('id', ParseIntPipe) id: number) {
-    return this.productsService.getById(id);
-  }
-
-  @Post()
-  create(@Body() dto: CreateProductDto) {
-    return this.productsService.create(dto);
-  }
-
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
-    return this.productsService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.productsService.remove(id);
-  }
-
+  // READ (list)
   @Get()
   findAll() {
     return this.productsService.findAll();
   }
 
+  // READ ONE (slug) – zgodnie z feedbackiem: /products/:slug
+  @Get(':slug')
+  findOne(@Param('slug') slug: string) {
+    return this.productsService.findOneBySlug(slug);
+  }
+
+  // CREATE
+  @Post()
+  create(@Body() dto: CreateProductDto) {
+    return this.productsService.create(dto);
+  }
+
+  // UPDATE (partial)
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
+    return this.productsService.update(id, dto);
+  }
+
+  // UPDATE (replace)
   @Put(':id')
   replace(
     @Param('id', ParseIntPipe) id: number,
@@ -51,15 +50,9 @@ export class ProductsController {
     return this.productsService.update(id, dto);
   }
 
-  // ✅ slug przeniesiony, żeby nie kolidował z :id
-  @Get('slug/:slug')
-  async findOne(@Param('slug') slug: string) {
-    const product = await this.productsService.findOneBySlug(slug);
-
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    return product;
+  // DELETE
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.remove(id);
   }
 }

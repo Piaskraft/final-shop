@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: final_shop
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - final_shop_db:/var/lib/postgresql/data
 

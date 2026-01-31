@@ -63,6 +63,13 @@ Base URL (prod): https://final-shop-qoz3.onrender.com
 - CRON_ENABLED=true
 ## Design patterns
 
+docker version
+docker compose up -d
+docker compose ps
+test:
+curl -i http://localhost:3001/api/products
+
+
 - **Repository pattern**: `OrdersRepository` + `PrismaOrdersRepository` (separacja logiki dostępu do DB od serwisu).
 - **Strategy pattern**: `PaymentStrategy` + `StripePaymentStrategy` używane przez `PaymentsService` (łatwa podmiana sposobu płatności).
 
