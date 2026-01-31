@@ -1,104 +1,123 @@
-# Final Shop (Piaskraft Mini)
-
-✅ Live demo (Render): https://final-shop-1.onrender.com  
-✅ API https://final-shop-qoz3.onrender.com/products
-Repo: https://github.com/Piaskraft/final-shop
-
 
 # Final Shop (Piaskraft Mini) — Abschlussprojekt
 
-A demo e-commerce app: **React (frontend)** + **NestJS (backend)** + **Prisma (PostgreSQL)**.
+Demo e-commerce app: **React (frontend)** + **NestJS (backend)** + **Prisma (PostgreSQL)**.
+
+✅ Live demo (Frontend / Render): https://final-shop-1.onrender.com  
+✅ API (Backend / Render): https://final-shop-qoz3.onrender.com  
+✅ Repo: https://github.com/Piaskraft/final-shop
+
+---
+
+## Stack
+
+- Frontend: React + TypeScript
+- Backend: NestJS + TypeScript
+- DB: PostgreSQL + Prisma
+- Payments: Stripe (Payment Intent)
+- External APIs: frankfurter.app (FX), open-meteo.com (Weather)
+- Mail: SMTP (optional)
+- Jobs: @nestjs/schedule (CRON) + cache warmup
+- Tests: Jest + e2e + coverage
+
+---
+
+## URLs
+
+### Local
+- Frontend: http://localhost:3000
+- Backend API base: http://localhost:3001/api
+
+### Production (Render)
+- Frontend: https://final-shop-1.onrender.com
+- Backend API base: https://final-shop-qoz3.onrender.com/api
+
+---
+
+## Features (what is implemented)
+
+- ✅ CRUD: Products, Orders, Categories, Users (GET/POST/PATCH/DELETE)
+- ✅ External integrations: currency rate + weather (2 external sources)
+- ✅ Payments: Stripe payment intent endpoint
+- ✅ Mail: SMTP test endpoint (disabled if env is missing)
+- ✅ Background jobs: CRON cache warmup (rate + weather)
+- ✅ CORS configured for local + production
+- ✅ Automated tests (unit + e2e + coverage)
+
+---
 
 ## Backend (NestJS) — API
 
-Base URL (local): http://localhost:3001  
-Base URL (prod): https://final-shop-qoz3.onrender.com
-
-### Endpoints (min. 15)
+### Minimum 15 endpoints (implemented)
 
 **Products**
-- GET    /products
-- GET    /products/:id
-- GET    /products/slug/:slug
-- POST   /products
-- PATCH  /products/:id
-- DELETE /products/:id
+- GET    `/api/products`
+- GET    `/api/products/id/:id`
+- GET    `/api/products/slug/:slug`
+- POST   `/api/products`
+- PATCH  `/api/products/:id`
+- DELETE `/api/products/:id`
 
 **Orders**
-- GET    /orders
-- GET    /orders/id/:id
-- POST   /orders
-- PATCH  /orders/id/:id
-- DELETE /orders/id/:id
+- GET    `/api/orders`
+- GET    `/api/orders/id/:id`
+- POST   `/api/orders`
+- PATCH  `/api/orders/id/:id`
+- DELETE `/api/orders/id/:id`
 
 **Categories**
-- GET    /categories
-- GET    /categories/:id
-- GET    /categories/slug/:slug
-- POST   /categories
-- PATCH  /categories/:id
-- DELETE /categories/:id
+- GET    `/api/categories`
+- GET    `/api/categories/:id`
+- GET    `/api/categories/slug/:slug`
+- POST   `/api/categories`
+- PATCH  `/api/categories/:id`
+- DELETE `/api/categories/:id`
 
 **Users**
-- GET    /users
-- GET    /users/:id
-- POST   /users
-- PATCH  /users/:id
-- DELETE /users/:id
+- GET    `/api/users`
+- GET    `/api/users/id/:id`
+- POST   `/api/users`
+- PATCH  `/api/users/id/:id`
+- DELETE `/api/users/id/:id`
 
 **Payments (Stripe)**
-- POST   /payments/payment-intent
+- POST   `/api/payments/payment-intent`
 
 **Mail (SMTP)**
-- POST   /mail/test
+- POST   `/api/mail/test`
 
-### ENV (backend)
-- DATABASE_URL=
-- PORT=3001
-- STRIPE_SECRET_KEY=
-- SMTP_HOST=
-- SMTP_USER=
-- SMTP_PASS=
-- SMTP_FROM=
-- CRON_ENABLED=true
-## Design patterns
+**External (2 sources)**
+- GET    `/api/external/rate?base=EUR&target=PLN`  
+  Provider: `frankfurter.app`
+- GET    `/api/external/weather?lat=51.4556&lon=7.0116&city=Essen`  
+  Provider: `open-meteo.com`
 
-docker version
-docker compose up -d
-docker compose ps
-test:
-curl -i http://localhost:3001/api/products
+> Tip: External endpoints return header `X-Cache: HIT/MISS` (cache layer).
 
+---
 
-- **Repository pattern**: `OrdersRepository` + `PrismaOrdersRepository` (separacja logiki dostępu do DB od serwisu).
-- **Strategy pattern**: `PaymentStrategy` + `StripePaymentStrategy` używane przez `PaymentsService` (łatwa podmiana sposobu płatności).
+## External cache warmup (CRON)
 
+A scheduled job warms up cache for external APIs (currency + weather):
 
-### Tests
-```bash
-cd backend
-npm run lint
-npm run test
-npm run test:e2e
-npm run test:cov
+- Frequency: **every 10 minutes**
+- Controlled by env: `CRON_ENABLED=true`
 
+Default warmup values:
+- `base=EUR`, `target=PLN`
+- Essen: `lat=51.4556`, `lon=7.0116`, `city=Essen`
 
+---
 
+## Design patterns (backend)
 
+- **Repository pattern**  
+  `OrdersRepository` + `PrismaOrdersRepository`  
+  (separates DB access layer from service logic)
 
-## Repo structure
-
-```
-final-shop/
-  backend/   # NestJS + Prisma
-  client/    # React + TS
-```
-
-## Requirements
-
-* Node.js (LTS)
-* npm
-* PostgreSQL (lokalnie) lub Render PostgreSQL
+- **Strategy pattern**  
+  `PaymentStrategy` + `StripePaymentStrategy` used by `PaymentsService`  
+  (easy to swap payment provider)
 
 ---
 
@@ -112,20 +131,64 @@ npm install
 
 cd ../client
 npm install
+````
+
+### 2) Start PostgreSQL via Docker Compose
+
+From repo root:
+
+```bash
+docker context use desktop-linux
+docker compose up -d
+docker compose ps
 ```
 
-### 2) Run locally
+DB runs on:
 
-**Backend**
+* host: `localhost`
+* port: `5433` (mapped to container `5432`)
+
+### 3) Backend ENV (`backend/.env`)
+
+Create `backend/.env` (based on `.env.example`):
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/final_shop?schema=public
+PORT=3001
+
+# Stripe
+STRIPE_SECRET_KEY=
+
+# SMTP (optional)
+SMTP_HOST=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+
+# Jobs
+CRON_ENABLED=true
+```
+
+### 4) Prisma (migrations / generate)
+
+```bash
+cd backend
+npx prisma generate
+npx prisma migrate dev
+# (optional) if you have seed:
+# npx prisma db seed
+```
+
+### 5) Run backend
 
 ```bash
 cd backend
 npm run start:dev
 ```
 
-Backend: [http://localhost:3001](http://localhost:3001)
+Backend: [http://localhost:3001/api](http://localhost:3001/api)
 
-**Frontend**
+### 6) Run frontend
 
 ```bash
 cd client
@@ -136,66 +199,86 @@ Frontend: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Environment variables
+## Frontend environment
 
-### Frontend (Render)
+### Production (Render)
 
-W Render → Static Site → Environment:
+In Render → Static Site → Environment:
 
-* `REACT_APP_API_URL` = `https://final-shop-qoz3.onrender.com`
+* `REACT_APP_API_URL=https://final-shop-qoz3.onrender.com`
 
-*(lokalnie możesz też ustawić `.env` w `client/` jeśli chcesz, ale nie jest wymagane do samego deployu)*
+### Local
 
-### Backend (Render)
+Frontend uses proxy to backend:
 
-W Render → Web Service → Environment:
-
-* `DATABASE_URL`=
-* `PORT` = (Render ustawia sam, app używa `process.env.PORT`)
+* requests to `/api/...` go to `http://localhost:3001`
 
 ---
 
-## API endpoints
+## Quick smoke tests (local)
 
 ### Products
 
-* `GET /products`
-* `GET /products/:slug`
+```bash
+curl -i http://localhost:3001/api/products
+curl -i http://localhost:3001/api/products/slug/mjw-ringmaulschluessel-10mm
+```
 
-### Orders
+### External APIs
 
-* `GET /orders`
-* `POST /orders`
+```bash
+curl -i "http://localhost:3001/api/external/rate?base=EUR&target=PLN"
+curl -i "http://localhost:3001/api/external/weather?lat=51.4556&lon=7.0116&city=Essen"
+```
 
-Base URL:
+### CRUD check (Products) — POST / PATCH / PUT / DELETE
 
-* Lokalnie: `http://localhost:3001`
-* Produkcja: `https://final-shop-qoz3.onrender.com`
+```bash
+# POST (create)
+curl -i -X POST "http://localhost:3001/api/products" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"TMP","slug":"tmp-123","price":9.99,"description":"tmp","mainImage":"https://via.placeholder.com/1"}'
+
+# PATCH (partial update)
+curl -i -X PATCH "http://localhost:3001/api/products/5" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"TMP2"}'
+
+# PUT (replace)
+curl -i -X PUT "http://localhost:3001/api/products/5" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"TMP3","slug":"tmp-123","price":9.99,"description":"tmp","mainImage":"https://via.placeholder.com/1"}'
+
+# DELETE
+curl -i -X DELETE "http://localhost:3001/api/products/5"
+```
+
+---
+
+## Tests (backend)
+
+```bash
+cd backend
+npm run lint
+npm run test
+npm run test:e2e
+npm run test:cov
+```
 
 ---
 
 ## CORS
 
-CORS jest skonfigurowany w:
+Configured in `backend/src/main.ts`.
 
-* `backend/src/main.ts`
-
-Dozwolone originy:
+Allowed origins:
 
 * `https://final-shop-1.onrender.com`
 * `http://localhost:3000`
 
 ---
 
-## Quick test (production)
-
-1. Wejdź na frontend: [https://final-shop-1.onrender.com](https://final-shop-1.onrender.com)
-2. Sprawdź `GET /products` (Network: status 200)
-3. Dodaj produkt do koszyka
-4. Checkout → wyślij zamówienie (Network: `POST /orders` status 201)
-
----
-
 ## Author
-Mateusz Piasecki 
+
+Mateusz Piasecki
 Piaskraft — Demo-Shop für Abschlussprojekt
