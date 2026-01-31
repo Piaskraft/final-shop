@@ -1,14 +1,16 @@
 services:
   db:
     image: postgres:16
+    container_name: finalshop-db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: final_shop
+      POSTGRES_USER: finalshop
+      POSTGRES_PASSWORD: finalshop
+      POSTGRES_DB: finalshop
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - final_shop_db:/var/lib/postgresql/data
+      - finalshop_db:/var/lib/postgresql/data
 
 volumes:
-  final_shop_db:
+  finalshop_db:
