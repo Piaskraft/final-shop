@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { randomBytes, randomUUID as nodeRandomUUID } from 'crypto';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import type { Request, Response, NextFunction } from 'express';
 
 type CryptoLike = { randomUUID: () => string };
 
@@ -25,7 +28,9 @@ if (!g.crypto?.randomUUID) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.setGlobalPrefix('api');
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -35,11 +40,16 @@ async function bootstrap() {
     }),
   );
 
+  // CORS: potrzebne tylko gdy front i backend są na różnych domenach (np. osobny frontend na Render).
+  // Przy ServeStatic (jeden serwer) requesty są same-origin i CORS nie przeszkadza.
   app.enableCors({
     origin: [
       'https://final-shop-1.onrender.com',
       'http://final-shop-1.onrender.com',
+      'https://final-shop-qoz3.onrender.com',
+      'http://final-shop-qoz3.onrender.com',
       'http://localhost:3000',
+      'http://localhost:3001',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -47,6 +57,22 @@ async function bootstrap() {
   });
 
   app.enableShutdownHooks();
+
+  // SPA fallback: React Router refresh fix (/cart, /checkout, itp.)
+  // Działa tylko jeśli istnieje backend/public/index.html (czyli po build+copy Reacta).
+ const publicDir = join(__dirname, '..', 'public');
+
+  const hasIndex = existsSync(join(publicDir, 'index.html'));
+
+  if (hasIndex) {
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method !== 'GET') return next();
+      if (req.path.startsWith('/api')) return next();
+      if (req.path.includes('.')) return next(); // assets: .js .css .png itp.
+
+      return res.sendFile('index.html', { root: publicDir });
+    });
+  }
 
   await app.listen(process.env.PORT || 3001);
 }

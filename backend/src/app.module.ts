@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ScheduleModule } from '@nestjs/schedule';
+import { join } from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,31 +12,39 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { UsersModule } from './users/users.module';
-import { ScheduleModule } from '@nestjs/schedule';
 import { PaymentsModule } from './payments/payments.module';
 import { MailModule } from './mail/mail.module';
 import { JobsModule } from './jobs/jobs.module';
-import { CacheModule } from '@nestjs/cache-manager';
 import { ExternalModule } from './external/external.module';
 
 @Module({
   imports: [
-    CacheModule.register({ isGlobal: true }),
+    // React build served by Nest (backend/public)
+    ServeStaticModule.forRoot({
+     rootPath: join(__dirname, '..', 'public'),
+
+      exclude: ['/api*'],
+    }),
+
+    // Global cache
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 60, // seconds
+    }),
+
+    // Scheduler
     ScheduleModule.forRoot(),
+
+    // App modules
     ExternalModule,
     PrismaModule,
     ProductsModule,
     OrdersModule,
     CategoriesModule,
     UsersModule,
-    ScheduleModule.forRoot(),
     PaymentsModule,
     MailModule,
     JobsModule,
-    CacheModule.register({
-      isGlobal: true,
-      ttl: 60,
-    }),
   ],
   controllers: [AppController],
   providers: [AppService],
