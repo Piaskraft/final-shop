@@ -1,15 +1,13 @@
-Jasne — masz tu **cały README.md poprawiony 1:1** (formatowanie, code fences, spójne ścieżki, Docker Compose w root, `.env.example` w backend, poprawne `DATABASE_URL`, przykłady LIVE, zero błędnych backticków). Skopiuj i wklej jako **README.md w root repo**.
-
-````md
 # Final Shop (Piaskraft Mini)
 
-Demo e-commerce: **React + TypeScript (frontend)** + **NestJS + Prisma (backend)** + **PostgreSQL**.
+Demo e-commerce: **React + TypeScript (frontend)** + **NestJS 11 + Prisma (backend)** + **PostgreSQL**.
 
 ✅ Live demo (frontend): https://final-shop-1.onrender.com  
-✅ Repo: https://github.com/Piaskraft/final-shop  
+✅ Live API (backend): https://final-shop-qoz3.onrender.com/api  
+✅ Repo: https://github.com/Piaskraft/final-shop
 
-> Monorepo: `/backend` (API) + `/client` (UI)  
-> Backend uses global prefix: **/api**
+> Monorepo: `/backend` (Nest API) + `/client` (React UI)  
+> Runtime backend uses global prefix: **/api**
 
 ---
 
@@ -18,17 +16,19 @@ Demo e-commerce: **React + TypeScript (frontend)** + **NestJS + Prisma (backend)
 ### Backend
 - NestJS 11
 - Prisma ORM + PostgreSQL
-- ValidationPipe + `class-validator` / `class-transformer`
+- Validation: global `ValidationPipe` + `class-validator` / `class-transformer`
 - Scheduler: `@nestjs/schedule` (Cron)
-- Integrations: **Stripe** + **SMTP (Nodemailer)**
-- External data: **Currency + Weather APIs**
-- Cache: `cache-manager` (used for external endpoints)
-- Tests: Jest + Supertest (unit + e2e)
+- Cache: `cache-manager` (external endpoints, TTL 10 min)
+- Integrations:
+  - **Stripe** (PaymentIntent)
+  - **SMTP** (Nodemailer)
+- Tests: Jest (unit) + Supertest (e2e) + coverage
 
 ### Frontend
 - React 19 + TypeScript
 - Redux Toolkit
 - React Router v7
+- CRA proxy for local dev (`client/package.json` → proxy to `http://localhost:3001`)
 
 ---
 
@@ -36,34 +36,34 @@ Demo e-commerce: **React + TypeScript (frontend)** + **NestJS + Prisma (backend)
 
 ```txt
 final-shop/
-  backend/   # NestJS API + Prisma
-  client/    # React app
-  docker-compose.yml   # PostgreSQL for local dev
-````
+  backend/            # NestJS API + Prisma
+  client/             # React app
+  docker-compose.yml  # PostgreSQL for local dev (root)
+  README.md
+  DOKUMENTACJA.mrkd
+```
 
 ---
 
 ## Requirements checklist (rubric-friendly)
 
-* ✅ **15+ endpoints** (CRUD for products/orders/users/categories + payments/mail/external)
-* ✅ **4+ HTTP methods**: GET / POST / PATCH / PUT / DELETE
-* ✅ **2+ external integrations**
-
-  * Stripe (PaymentIntent)
-  * SMTP mail (Nodemailer)
-* ✅ **Scheduler**: Cron job (`@Cron`)
-* ✅ **Tests + coverage**
-
-  * unit tests + e2e
-  * coverage artifacts in `backend/coverage/` (≈ 70%+ lines/statements)
-* ✅ **Design patterns (explicit)**
-
-  * Repository pattern (OrdersRepository + PrismaOrdersRepository)
-  * Strategy pattern (PaymentStrategy + StripePaymentStrategy)
-* ✅ **Constants centralization**
-
-  * backend: `backend/src/config/constants.ts`
-  * frontend: `client/src/config/constants.ts`
+- ✅ **15+ endpoints** (products/orders/categories/users + payments/mail/external + health)
+- ✅ **4+ HTTP methods**: GET / POST / PATCH / PUT / DELETE
+- ✅ **2+ external sources / integrations**
+  - External data: **currency + weather**
+  - Integrations: **Stripe + SMTP**
+- ✅ **Scheduler**:
+  - cleanup job daily 03:00 (enabled by `CRON_ENABLED=true`)
+  - external cache warm-up every 10 minutes
+- ✅ **Tests + coverage**:
+  - unit + e2e
+  - `npm run test:cov` coverage ~ **89% statements / 65% branches**
+- ✅ **Design patterns**:
+  - Repository pattern (OrdersRepository + Prisma implementation)
+  - Strategy pattern (PaymentStrategy + StripePaymentStrategy)
+- ✅ **Constants centralization**
+  - backend: `backend/src/config/constants.ts`
+  - frontend: `client/src/config/constants.ts`
 
 ---
 
@@ -71,7 +71,7 @@ final-shop/
 
 ### 0) Database (Docker) — run from repo root
 
-> `docker-compose.yml` is located in the **repository root**.
+`docker-compose.yml` is in the repository root.
 
 ```bash
 # run in: final-shop/
@@ -90,19 +90,14 @@ docker compose down
 
 ```bash
 cd backend
-npm install
-```
-
-Create env (recommended):
-
-```bash
+npm ci
 cp .env.example .env
 ```
 
-Run migrations + seed:
+Generate Prisma client + run migrations + seed:
 
 ```bash
-npx prisma generate
+npm run db:generate
 npx prisma migrate dev
 npm run seed
 ```
@@ -113,13 +108,14 @@ Start API:
 npm run start:dev
 ```
 
-Backend base URL (local):
+Backend (local):
+- http://localhost:3001/api
+- Example: `GET http://localhost:3001/api/products`
 
-* [http://localhost:3001/api](http://localhost:3001/api)
-
-Example:
-
-* `GET http://localhost:3001/api/products`
+> Tip: backend has helper scripts:
+> - `npm run db:up` / `npm run db:down`
+> - `npm run db:prepare` (up + generate + migrate + seed)
+> - `npm run start:dev:ready` (db:prepare + start:dev)
 
 ---
 
@@ -127,26 +123,40 @@ Example:
 
 ```bash
 cd ../client
-npm install
+npm ci
 npm start
 ```
 
-Frontend (local):
+Frontend (local):  
+- http://localhost:3000
 
-* [http://localhost:3000](http://localhost:3000)
+API calling rules (client):
+- If `REACT_APP_API_URL` is **empty** → client uses relative **`/api`** (works locally via CRA proxy)
+- If `REACT_APP_API_URL` is set → client uses `${REACT_APP_API_URL}/api` (smart guard prevents `/api/api`)
 
-Optional env to point to a remote backend:
-
-* create `client/.env` and set:
+Optional env for frontend:
+Create `client/.env`:
 
 ```env
-REACT_APP_API_URL=https://your-backend-domain
+REACT_APP_API_URL=https://final-shop-qoz3.onrender.com
 ```
 
-Notes:
+---
 
-* Frontend builds API base as: `${REACT_APP_API_URL}/api`
-* If `REACT_APP_API_URL` is empty, frontend uses relative `/api` (works locally thanks to CRA proxy)
+## Run as one service (backend serves frontend)
+
+Backend is configured to serve React build from `backend/public`:
+- `ServeStaticModule` serves static files
+- SPA fallback is enabled in `backend/src/main.ts` when `backend/public/index.html` exists
+
+Build everything and copy React build into backend:
+
+```bash
+cd backend
+npm ci
+npm run build:full
+npm run start:prod
+```
 
 ---
 
@@ -173,112 +183,100 @@ SMTP_FROM="no-reply@example.com"
 CRON_ENABLED=true
 ```
 
+Important:
+- If Stripe env is missing → `/api/payments/payment-intent` returns **503** (`Stripe is not configured`)
+- If SMTP env is missing → `/api/mail/test` returns **503** (`Email is not configured`)
+
 ---
 
-## Live API example (Render)
+## Live API (Render)
 
-Backend uses prefix **/api**. Example:
+Base URL (API prefix is `/api`):
+- https://final-shop-qoz3.onrender.com/api
 
-* `GET https://final-shop-qoz3.onrender.com/api/products`
+Example:
+- `GET https://final-shop-qoz3.onrender.com/api/products`
 
 ---
 
 ## API endpoints (backend)
 
-> Global prefix: **/api**
-> Example base URL (local): `http://localhost:3001/api`
+> Global prefix: **/api**  
+> Example (local): `http://localhost:3001/api`
 
 ### Health
-
-* `GET /api` → "Hello World" (simple health check)
+- `GET /api` → "Hello World" (simple health check)
 
 ### Products (CRUD)
-
-* `GET /api/products` → list
-* `GET /api/products/:id` → single by numeric id
-* `GET /api/products/slug/:slug` → single by slug
-* `POST /api/products` → create
-* `PATCH /api/products/:id` → partial update
-* `PUT /api/products/:id` → replace/update
-* `DELETE /api/products/:id` → delete
+- `GET /api/products` → list
+- `GET /api/products/:id` → single by numeric id
+- `GET /api/products/slug/:slug` → single by slug
+- `POST /api/products` → create
+- `PATCH /api/products/:id` → partial update
+- `PUT /api/products/:id` → replace/update
+- `DELETE /api/products/:id` → delete
 
 ### Orders (CRUD)
-
-* `GET /api/orders` → list (with items + products)
-* `GET /api/orders/id/:id` → details
-* `POST /api/orders` → create (validates items, calculates total)
-* `PATCH /api/orders/id/:id` → update (optionally recalculates total if items provided)
-* `DELETE /api/orders/id/:id` → delete
+- `POST /api/orders` → create (validates items, calculates totals)
+- `GET /api/orders` → list (with items + products)
+- `GET /api/orders/id/:id` → details
+- `PATCH /api/orders/id/:id` → update
+- `DELETE /api/orders/id/:id` → delete
 
 ### Categories (CRUD)
-
-* `GET /api/categories`
-* `GET /api/categories/id/:id`
-* `GET /api/categories/slug/:slug`
-* `POST /api/categories`
-* `PATCH /api/categories/id/:id`
-* `DELETE /api/categories/id/:id`
+- `GET /api/categories`
+- `GET /api/categories/id/:id`
+- `GET /api/categories/slug/:slug`
+- `POST /api/categories`
+- `PATCH /api/categories/id/:id`
+- `DELETE /api/categories/id/:id`
 
 ### Users (CRUD)
-
-* `GET /api/users`
-* `GET /api/users/id/:id`
-* `POST /api/users`
-* `PATCH /api/users/id/:id`
-* `DELETE /api/users/id/:id`
+- `GET /api/users`
+- `GET /api/users/id/:id`
+- `POST /api/users`
+- `PATCH /api/users/id/:id`
+- `DELETE /api/users/id/:id`
 
 ### Payments (Stripe)
-
-* `POST /api/payments/payment-intent`
-
-  * body: `{ "orderId": 123 }`
-  * response: `{ "orderId": 123, "clientSecret": "..." }`
-  * requires: `STRIPE_SECRET_KEY`
+- `POST /api/payments/payment-intent`
+  - body: `{ "orderId": 123 }`
+  - response: `{ "orderId": 123, "clientSecret": "..." }`
+  - requires: `STRIPE_SECRET_KEY` (otherwise **503**)
 
 ### Mail (SMTP / Nodemailer)
+- `POST /api/mail/test`
+  - body: `{ "to": "...", "subject": "...", "text": "..." }`
+  - requires: SMTP envs (otherwise **503**)
 
-* `POST /api/mail/test`
-
-  * body: `{ "to": "...", "subject": "...", "text": "..." }`
-  * requires: `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`
-
-### External data (2 sources + cache)
-
-* `GET /api/external/rate?base=EUR&target=PLN`
-
-  * provider: frankfurter.app
-  * response header: `X-Cache: HIT|MISS`
-* `GET /api/external/rates?base=EUR&target=PLN` (alias / compatibility)
-* `GET /api/external/weather?lat=52.52&lon=13.41&city=Berlin`
-
-  * provider: open-meteo.com
-  * response header: `X-Cache: HIT|MISS`
+### External data (currency + weather) + cache
+- `GET /api/external/rate?base=EUR&target=PLN`
+- `GET /api/external/rates?base=EUR&target=PLN` (alias)
+  - provider: frankfurter.app
+  - response header: `X-Cache: HIT|MISS` (TTL ~10 min)
+- `GET /api/external/weather?lat=51.4556&lon=7.0116&city=Essen`
+  - provider: open-meteo.com
+  - response header: `X-Cache: HIT|MISS` (TTL ~10 min)
 
 ---
 
-## Scheduler (background job)
+## Scheduler (background jobs)
 
-* Cron job runs daily at 03:00 server time:
-
-  * `OrdersCleanupJob` (`@Cron(CronExpression.EVERY_DAY_AT_3AM)`)
-
-Enable/disable via env:
-
-```env
-CRON_ENABLED=true
-```
+- `OrdersCleanupJob` runs daily at **03:00**:
+  - enabled only when `CRON_ENABLED=true`
+- `ExternalJobs.warmCache` runs every **10 minutes**:
+  - warms cache for exchange rate + weather (default Essen)
 
 ---
 
 ## Validation & error handling
 
-* Global `ValidationPipe` enabled:
-
-  * `whitelist: true`
-  * `forbidNonWhitelisted: true`
-  * `transform: true` (+ implicit conversion)
-* DTO validation via `class-validator`
-* Consistent HTTP errors: `NotFoundException`, `BadRequestException`, etc.
+- Global `ValidationPipe`:
+  - `whitelist: true`
+  - `forbidNonWhitelisted: true`
+  - `transform: true` (+ implicit conversion)
+- DTO validation via `class-validator`
+- Standard Nest exceptions (400/404/503 etc.)
 
 ---
 
@@ -295,30 +293,17 @@ npm run test:cov
 ```
 
 Coverage output:
-
-* `backend/coverage/`
+- `backend/coverage/`
 
 ### Frontend
 
 ```bash
 cd client
-npm test
+npm run build
 ```
-
----
-
-## Deployment (Render)
-
-* Frontend deployed as static React build
-* Backend deployed as NestJS API service (separate from frontend)
-* CORS configured for:
-
-  * [https://final-shop-1.onrender.com](https://final-shop-1.onrender.com)
-  * [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ## Author
 
 Mateusz Piasecki
-
