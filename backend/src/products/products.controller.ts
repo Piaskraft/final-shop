@@ -23,9 +23,15 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-  // READ ONE (slug) – zgodnie z feedbackiem: /products/:slug
-  @Get(':slug')
-  findOne(@Param('slug') slug: string) {
+  // READ ONE (id) -> /products/:id  (to robi 400 dla /products/abc)
+  @Get(':id')
+  getById(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.getById(id);
+  }
+
+  // READ ONE (slug) -> /products/slug/:slug
+  @Get('slug/:slug')
+  findOneBySlug(@Param('slug') slug: string) {
     return this.productsService.findOneBySlug(slug);
   }
 
