@@ -1,261 +1,255 @@
 
-# Final Shop (Piaskraft Mini) — Abschlussprojekt
+# Final Shop (Piaskraft Mini)
 
-Demo e-commerce app: **React (frontend)** + **NestJS (backend)** + **Prisma (PostgreSQL)**.
+Demo e-commerce: **React + TypeScript (frontend)** + **NestJS + Prisma (backend)** + **PostgreSQL**.
 
-✅ Live demo (Frontend / Render): https://final-shop-1.onrender.com  
-✅ API (Backend / Render): https://final-shop-qoz3.onrender.com  
+✅ Live demo (frontend): https://final-shop-1.onrender.com  
 ✅ Repo: https://github.com/Piaskraft/final-shop
 
----
-
-## Stack
-
-- Frontend: React + TypeScript
-- Backend: NestJS + TypeScript
-- DB: PostgreSQL + Prisma
-- Payments: Stripe (Payment Intent)
-- External APIs: frankfurter.app (FX), open-meteo.com (Weather)
-- Mail: SMTP (optional)
-- Jobs: @nestjs/schedule (CRON) + cache warmup
-- Tests: Jest + e2e + coverage
+> Monorepo: `/backend` (API) + `/client` (UI)
 
 ---
 
-## URLs
+## Tech stack
 
-### Local
-- Frontend: http://localhost:3000
-- Backend API base: http://localhost:3001/api
+**Backend**
+- NestJS 11
+- Prisma ORM + PostgreSQL
+- ValidationPipe + `class-validator` / `class-transformer`
+- Scheduler: `@nestjs/schedule` (Cron)
+- Integrations: **Stripe** + **SMTP (Nodemailer)**
+- External data proxy: **Currency + Weather APIs**
+- Cache: `cache-manager` (used for external endpoints)
+- Tests: Jest + Supertest (unit + e2e)
 
-### Production (Render)
-- Frontend: https://final-shop-1.onrender.com
-- Backend API base: https://final-shop-qoz3.onrender.com/api
-
----
-
-## Features (what is implemented)
-
-- ✅ CRUD: Products, Orders, Categories, Users (GET/POST/PATCH/DELETE)
-- ✅ External integrations: currency rate + weather (2 external sources)
-- ✅ Payments: Stripe payment intent endpoint
-- ✅ Mail: SMTP test endpoint (disabled if env is missing)
-- ✅ Background jobs: CRON cache warmup (rate + weather)
-- ✅ CORS configured for local + production
-- ✅ Automated tests (unit + e2e + coverage)
+**Frontend**
+- React 19 + TypeScript
+- Redux Toolkit
+- React Router v7
 
 ---
 
-## Backend (NestJS) — API
+## Project structure
 
-### Minimum 15 endpoints (implemented)
+```
 
-**Products**
-- GET    `/api/products`
-- GET    `/api/products/id/:id`
-- GET    `/api/products/slug/:slug`
-- POST   `/api/products`
-- PATCH  `/api/products/:id`
-- DELETE `/api/products/:id`
+final-shop/
+backend/        # NestJS API + Prisma
+client/         # React app
 
-**Orders**
-- GET    `/api/orders`
-- GET    `/api/orders/id/:id`
-- POST   `/api/orders`
-- PATCH  `/api/orders/id/:id`
-- DELETE `/api/orders/id/:id`
-
-**Categories**
-- GET    `/api/categories`
-- GET    `/api/categories/:id`
-- GET    `/api/categories/slug/:slug`
-- POST   `/api/categories`
-- PATCH  `/api/categories/:id`
-- DELETE `/api/categories/:id`
-
-**Users**
-- GET    `/api/users`
-- GET    `/api/users/id/:id`
-- POST   `/api/users`
-- PATCH  `/api/users/id/:id`
-- DELETE `/api/users/id/:id`
-
-**Payments (Stripe)**
-- POST   `/api/payments/payment-intent`
-
-**Mail (SMTP)**
-- POST   `/api/mail/test`
-
-**External (2 sources)**
-- GET    `/api/external/rate?base=EUR&target=PLN`  
-  Provider: `frankfurter.app`
-- GET    `/api/external/weather?lat=51.4556&lon=7.0116&city=Essen`  
-  Provider: `open-meteo.com`
-
-> Tip: External endpoints return header `X-Cache: HIT/MISS` (cache layer).
+````
 
 ---
 
-## External cache warmup (CRON)
+## Requirements checklist (rubric-friendly)
 
-A scheduled job warms up cache for external APIs (currency + weather):
-
-- Frequency: **every 10 minutes**
-- Controlled by env: `CRON_ENABLED=true`
-
-Default warmup values:
-- `base=EUR`, `target=PLN`
-- Essen: `lat=51.4556`, `lon=7.0116`, `city=Essen`
-
----
-
-## Design patterns (backend)
-
-- **Repository pattern**  
-  `OrdersRepository` + `PrismaOrdersRepository`  
-  (separates DB access layer from service logic)
-
-- **Strategy pattern**  
-  `PaymentStrategy` + `StripePaymentStrategy` used by `PaymentsService`  
-  (easy to swap payment provider)
+- ✅ **15+ endpoints** (CRUD for products/orders/users/categories + payments/mail/external)
+- ✅ **4 methods HTTP**: GET / POST / PATCH / PUT / DELETE
+- ✅ **2 external integrations**:
+  - Stripe (PaymentIntent)
+  - SMTP mail (Nodemailer)
+- ✅ **Scheduler**: Cron job (`@Cron`)
+- ✅ **Tests + coverage**:
+  - unit tests + e2e
+  - coverage from repo artifacts: ~**71% lines**, ~**72% statements**
+- ✅ **Design patterns (explicit)**:
+  - Repository pattern (OrdersRepository + PrismaOrdersRepository)
+  - Strategy pattern (StripePaymentStrategy implementing PaymentStrategy interface)
+- ✅ **Constants centralization**
+  - backend: `src/config/constants.ts`
+  - frontend: `src/config/constants.ts`
 
 ---
 
-## Local setup
+## Quick start (local)
 
-### 1) Install
+### 1) Backend
 
+#### Prerequisites
+- Node.js (LTS)
+- PostgreSQL (local or Docker)
+
+#### Setup
 ```bash
 cd backend
-npm install
-
-cd ../client
 npm install
 ````
 
-### 2) Start PostgreSQL via Docker Compose
+#### Env
 
-From repo root:
-
-```bash
-docker context use desktop-linux
-docker compose up -d
-docker compose ps
-```
-
-DB runs on:
-
-* host: `localhost`
-* port: `5433` (mapped to container `5432`)
-
-### 3) Backend ENV (`backend/.env`)
-
-Create `backend/.env` (based on `.env.example`):
+Create `backend/.env`:
 
 ```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/final_shop?schema=public
-PORT=3001
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/final_shop?schema=public
 
-# Stripe
-STRIPE_SECRET_KEY=
+# optional (Stripe)
+STRIPE_SECRET_KEY=sk_test_...
 
-# SMTP (optional)
-SMTP_HOST=
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM=
+# optional (SMTP mail)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=user@example.com
+SMTP_PASS=your_password
+SMTP_FROM=no-reply@example.com
 
-# Jobs
+# optional (Scheduler)
 CRON_ENABLED=true
 ```
 
-### 4) Prisma (migrations / generate)
+#### DB migrate + seed
 
 ```bash
-cd backend
 npx prisma generate
 npx prisma migrate dev
-# (optional) if you have seed:
-# npx prisma db seed
+npm run seed
 ```
 
-### 5) Run backend
+#### Run API
 
 ```bash
-cd backend
 npm run start:dev
 ```
 
-Backend: [http://localhost:3001/api](http://localhost:3001/api)
+API runs on:
 
-### 6) Run frontend
+* [http://localhost:3001/api](http://localhost:3001/api)
+
+---
+
+### 2) Frontend
 
 ```bash
-cd client
+cd ../client
+npm install
+```
+
+#### Env (optional)
+
+If you want to point frontend to a remote API, set:
+
+```env
+REACT_APP_API_URL=https://your-backend-domain
+```
+
+Notes:
+
+* Frontend automatically builds API base as `${REACT_APP_API_URL}/api`.
+* If `REACT_APP_API_URL` is empty, frontend uses relative `/api` (works locally thanks to CRA proxy).
+
+#### Run UI
+
+```bash
 npm start
 ```
 
-Frontend: [http://localhost:3000](http://localhost:3000)
+Frontend runs on:
+
+* [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Frontend environment
+## API endpoints (backend)
 
-### Production (Render)
+> Global prefix: **/api**
+> Example base URL (local): `http://localhost:3001/api`
 
-In Render → Static Site → Environment:
+### Health / root
 
-* `REACT_APP_API_URL=https://final-shop-qoz3.onrender.com`
+* `GET /api` → "Hello World" (simple health check)
 
-### Local
+### Products (CRUD)
 
-Frontend uses proxy to backend:
+* `GET /api/products` → list
+* `GET /api/products/:id` → single by numeric id
+* `GET /api/products/slug/:slug` → single by slug
+* `POST /api/products` → create
+* `PATCH /api/products/:id` → partial update
+* `PUT /api/products/:id` → replace/update
+* `DELETE /api/products/:id` → delete
 
-* requests to `/api/...` go to `http://localhost:3001`
+### Orders (CRUD)
+
+* `GET /api/orders` → list (with items + products)
+* `GET /api/orders/id/:id` → details
+* `POST /api/orders` → create (validates items, calculates total)
+* `PATCH /api/orders/id/:id` → update (optionally recalculates total if items provided)
+* `DELETE /api/orders/id/:id` → delete
+
+### Categories (CRUD)
+
+* `GET /api/categories`
+* `GET /api/categories/id/:id`
+* `GET /api/categories/slug/:slug`
+* `POST /api/categories`
+* `PATCH /api/categories/id/:id`
+* `DELETE /api/categories/id/:id`
+
+### Users (CRUD)
+
+* `GET /api/users`
+* `GET /api/users/id/:id`
+* `POST /api/users`
+* `PATCH /api/users/id/:id`
+* `DELETE /api/users/id/:id`
+
+### Payments (Stripe)
+
+* `POST /api/payments/payment-intent`
+
+  * body: `{ "orderId": 123 }`
+  * response: `{ "orderId": 123, "clientSecret": "..." }`
+  * requires: `STRIPE_SECRET_KEY`
+
+### Mail (SMTP / Nodemailer)
+
+* `POST /api/mail/test`
+
+  * body: `{ "to": "...", "subject": "...", "text": "..." }`
+  * requires: `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`
+
+### External data (2 sources + cache)
+
+* `GET /api/external/rate?base=EUR&target=PLN`
+
+  * provider: frankfurter.app
+  * response header: `X-Cache: HIT|MISS`
+* `GET /api/external/rates?base=EUR&target=PLN` (alias for backward compatibility)
+* `GET /api/external/weather?lat=52.52&lon=13.41&city=Berlin`
+
+  * provider: open-meteo.com
+  * response header: `X-Cache: HIT|MISS`
 
 ---
 
-## Quick smoke tests (local)
+## Scheduler (background job)
 
-### Products
+* Cron job runs daily at 03:00 server time:
 
-```bash
-curl -i http://localhost:3001/api/products
-curl -i http://localhost:3001/api/products/slug/mjw-ringmaulschluessel-10mm
-```
+  * `OrdersCleanupJob` (`@Cron(CronExpression.EVERY_DAY_AT_3AM)`)
 
-### External APIs
+Enable it via env:
 
-```bash
-curl -i "http://localhost:3001/api/external/rate?base=EUR&target=PLN"
-curl -i "http://localhost:3001/api/external/weather?lat=51.4556&lon=7.0116&city=Essen"
-```
-
-### CRUD check (Products) — POST / PATCH / PUT / DELETE
-
-```bash
-# POST (create)
-curl -i -X POST "http://localhost:3001/api/products" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"TMP","slug":"tmp-123","price":9.99,"description":"tmp","mainImage":"https://via.placeholder.com/1"}'
-
-# PATCH (partial update)
-curl -i -X PATCH "http://localhost:3001/api/products/5" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"TMP2"}'
-
-# PUT (replace)
-curl -i -X PUT "http://localhost:3001/api/products/5" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"TMP3","slug":"tmp-123","price":9.99,"description":"tmp","mainImage":"https://via.placeholder.com/1"}'
-
-# DELETE
-curl -i -X DELETE "http://localhost:3001/api/products/5"
+```env
+CRON_ENABLED=true
 ```
 
 ---
 
-## Tests (backend)
+## Validation & error handling
+
+* Global `ValidationPipe` enabled:
+
+  * `whitelist: true`
+  * `forbidNonWhitelisted: true`
+  * `transform: true` (+ implicit conversion)
+* DTO validation via `class-validator` (products/orders/users/categories/payments/mail)
+* Consistent HTTP errors: `NotFoundException`, `BadRequestException`, etc.
+
+---
+
+## Tests & quality
+
+### Backend
 
 ```bash
 cd backend
@@ -265,20 +259,29 @@ npm run test:e2e
 npm run test:cov
 ```
 
+Coverage artifacts are included in repo under `backend/coverage/`.
+
+### Frontend
+
+```bash
+cd client
+npm test
+```
+
 ---
 
-## CORS
+## Deployment (Render)
 
-Configured in `backend/src/main.ts`.
+* Frontend deployed as static React build
+* Backend deployed as NestJS API service (separate from frontend)
+* CORS configured for:
 
-Allowed origins:
-
-* `https://final-shop-1.onrender.com`
-* `http://localhost:3000`
+  * `https://final-shop-1.onrender.com`
+  * `http://localhost:3000`
 
 ---
 
 ## Author
 
 Mateusz Piasecki
-Piaskraft — Demo-Shop für Abschlussprojekt
+
