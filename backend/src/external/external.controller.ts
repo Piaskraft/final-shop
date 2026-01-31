@@ -20,7 +20,10 @@ export class ExternalController {
     @Query('base') base = 'EUR',
     @Query('target') target = 'PLN',
   ) {
-    const { data, cacheHit } = await this.external.getExchangeRate(base, target);
+    const { data, cacheHit } = await this.external.getExchangeRate(
+      base,
+      target,
+    );
     res.setHeader('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return data;
   }

@@ -26,7 +26,10 @@ export class ExternalService {
     return `weather:${lat.toFixed(4)}:${lon.toFixed(4)}`;
   }
 
-  async getExchangeRate(base = 'EUR', target = 'PLN'): Promise<CachedResult<ExchangeRateDto>> {
+  async getExchangeRate(
+    base = 'EUR',
+    target = 'PLN',
+  ): Promise<CachedResult<ExchangeRateDto>> {
     const key = this.rateKey(base, target);
 
     const cached = await this.cache.get<ExchangeRateDto>(key);
@@ -38,7 +41,11 @@ export class ExternalService {
     return { data: fresh, cacheHit: false };
   }
 
-  async getWeather(lat: number, lon: number, city: string | null = null): Promise<CachedResult<WeatherDto>> {
+  async getWeather(
+    lat: number,
+    lon: number,
+    city: string | null = null,
+  ): Promise<CachedResult<WeatherDto>> {
     const key = this.weatherKey(lat, lon);
 
     const cached = await this.cache.get<WeatherDto>(key);

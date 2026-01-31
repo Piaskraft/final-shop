@@ -6,7 +6,7 @@ import { ExternalService } from './external.service';
 export class ExternalJobs {
   private readonly logger = new Logger(ExternalJobs.name);
 
-  // Twoje domyślne dane (Essen)
+  // Domyślne dane (Essen)
   private readonly DEFAULT_BASE = 'EUR';
   private readonly DEFAULT_TARGET = 'PLN';
   private readonly ESSEN_LAT = 51.4556;
@@ -16,13 +16,23 @@ export class ExternalJobs {
 
   // co 10 minut odświeżamy cache
   @Cron('*/10 * * * *')
-  async warmCache() {
+  async warmCache(): Promise<void> {
     try {
-      await this.external.getExchangeRate(this.DEFAULT_BASE, this.DEFAULT_TARGET);
+      await this.external.getExchangeRate(
+        this.DEFAULT_BASE,
+        this.DEFAULT_TARGET,
+      );
       await this.external.getWeather(this.ESSEN_LAT, this.ESSEN_LON, 'Essen');
       this.logger.log('External cache warmed (rate + weather)');
-    } catch (e: any) {
-      this.logger.warn(`Warm cache failed: ${e?.message ?? e}`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'string'
+            ? err
+            : JSON.stringify(err);
+
+      this.logger.warn(`Warm cache failed: ${message}`);
     }
   }
 }

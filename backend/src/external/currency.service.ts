@@ -10,6 +10,13 @@ export type ExchangeRateDto = {
   date: string;
 };
 
+type FrankfurterLatestResponse = {
+  amount?: number;
+  base: string;
+  date: string;
+  rates: Record<string, number>;
+};
+
 @Injectable()
 export class CurrencyService {
   constructor(private readonly http: HttpService) {}
@@ -18,21 +25,30 @@ export class CurrencyService {
     const from = (base || 'EUR').toUpperCase();
     const to = (target || 'PLN').toUpperCase();
 
-    const url =
-      `https://api.frankfurter.app/latest?from=${encodeURIComponent(from)}` +
-      `&to=${encodeURIComponent(to)}`;
+    const url = 'https://api.frankfurter.app/latest';
 
     try {
       const { data } = await firstValueFrom(
-        this.http.get(url, { timeout: 8000 }),
+        this.http.get<FrankfurterLatestResponse>(url, {
+          timeout: 8000,
+          params: { from, to },
+        }),
       );
 
-      const rate = Number(data?.rates?.[to]);
-      const date = String(data?.date ?? '');
+      const rate = data.rates?.[to];
+      const date = data.date;
 
-      if (!Number.isFinite(rate) || !date) throw new Error('Invalid response');
+      if (typeof rate !== 'number' || !Number.isFinite(rate) || !date) {
+        throw new Error('Invalid response from frankfurter');
+      }
 
-      return { provider: 'frankfurter.app', base: from, target: to, rate, date };
+      return {
+        provider: 'frankfurter.app',
+        base: from,
+        target: to,
+        rate,
+        date,
+      };
     } catch {
       throw new BadGatewayException('External currency API error');
     }

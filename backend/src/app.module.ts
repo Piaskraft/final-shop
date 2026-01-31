@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -16,11 +15,9 @@ import { JobsModule } from './jobs/jobs.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ExternalModule } from './external/external.module';
 
-
 @Module({
   imports: [
-    
-     CacheModule.register({ isGlobal: true }),
+    CacheModule.register({ isGlobal: true }),
     ScheduleModule.forRoot(),
     ExternalModule,
     PrismaModule,
@@ -33,10 +30,9 @@ import { ExternalModule } from './external/external.module';
     MailModule,
     JobsModule,
     CacheModule.register({
-  isGlobal: true,
-  ttl: 60, 
-}),
-
+      isGlobal: true,
+      ttl: 60,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
