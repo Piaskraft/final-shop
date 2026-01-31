@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import type { Response } from 'express';
 import { ExternalController } from './external.controller';
 import { ExternalService } from './external.service';
 
@@ -10,9 +11,14 @@ describe('ExternalController', () => {
     getWeather: jest.fn(),
   };
 
+  const setHeaderMock = jest.fn();
+
   const resMock = {
-    setHeader: jest.fn(),
-  };
+    setHeader: (...args: Parameters<Response['setHeader']>) => {
+      setHeaderMock(...args);
+      return resMock as unknown as Response;
+    },
+  } as unknown as Response;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -37,7 +43,7 @@ describe('ExternalController', () => {
       cacheHit: true,
     });
 
-    const result = await controller.getRate(resMock as any, 'EUR', 'PLN');
+    const result = await controller.getRate(resMock, 'EUR', 'PLN');
 
     expect(result).toEqual({
       provider: 'frankfurter.app',
@@ -47,8 +53,11 @@ describe('ExternalController', () => {
       date: '2026-01-31',
     });
 
-    expect(externalServiceMock.getExchangeRate).toHaveBeenCalledWith('EUR', 'PLN');
-    expect(resMock.setHeader).toHaveBeenCalledWith('X-Cache', 'HIT');
+    expect(externalServiceMock.getExchangeRate).toHaveBeenCalledWith(
+      'EUR',
+      'PLN',
+    );
+    expect(setHeaderMock).toHaveBeenCalledWith('X-Cache', 'HIT');
   });
 
   it('getWeather(): parses lat/lon strings, sets X-Cache and returns data', async () => {
@@ -67,7 +76,7 @@ describe('ExternalController', () => {
     });
 
     const result = await controller.getWeather(
-      resMock as any,
+      resMock,
       '52.52',
       '13.41',
       'Berlin',
@@ -84,7 +93,11 @@ describe('ExternalController', () => {
       time: '2026-01-31T12:00',
     });
 
-    expect(externalServiceMock.getWeather).toHaveBeenCalledWith(52.52, 13.41, 'Berlin');
-    expect(resMock.setHeader).toHaveBeenCalledWith('X-Cache', 'MISS');
+    expect(externalServiceMock.getWeather).toHaveBeenCalledWith(
+      52.52,
+      13.41,
+      'Berlin',
+    );
+    expect(setHeaderMock).toHaveBeenCalledWith('X-Cache', 'MISS');
   });
 });
