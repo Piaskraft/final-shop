@@ -306,4 +306,4 @@ npm run build
 
 ## Author
 
-Mateusz Piasecki
+Mateusz Piasecki .
